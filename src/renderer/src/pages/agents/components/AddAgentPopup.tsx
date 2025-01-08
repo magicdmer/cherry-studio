@@ -34,7 +34,7 @@ const PopupContainer: React.FC<Props> = ({ resolve }) => {
   const formRef = useRef<FormInstance>(null)
   const [emoji, setEmoji] = useState('')
   const [loading, setLoading] = useState(false)
-  const [agentType, setAgentType] = useState<'normal' | 'plugin'>('normal') // æ·»åŠ ç±»å‹çŠ¶æ€
+  const [agentType, setAgentType] = useState<'normal' | 'plugin'>('normal') // Ìí¼ÓÀàĞÍ×´Ì¬
 
   const onFinish = (values: FieldType) => {
     const _emoji = emoji || getLeadingEmoji(values.name)

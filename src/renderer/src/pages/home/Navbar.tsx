@@ -10,6 +10,8 @@ import { useShortcut } from '@renderer/hooks/useShortcuts'
 import { useShowAssistants, useShowTopics } from '@renderer/hooks/useStore'
 import AssistantSettingsPopup from '@renderer/pages/settings/AssistantSettings'
 import { EVENT_NAMES, EventEmitter } from '@renderer/services/EventService'
+import { useAppDispatch } from '@renderer/store'
+import { setNarrowMode } from '@renderer/store/settings'
 import { Assistant, Topic } from '@renderer/types'
 import { FC } from 'react'
 import styled from 'styled-components'
@@ -25,8 +27,9 @@ interface Props {
 const HeaderNavbar: FC<Props> = ({ activeAssistant }) => {
   const { assistant } = useAssistant(activeAssistant.id)
   const { showAssistants, toggleShowAssistants } = useShowAssistants()
-  const { topicPosition } = useSettings()
+  const { topicPosition, sidebarIcons, narrowMode } = useSettings()
   const { showTopics, toggleShowTopics } = useShowTopics()
+  const dispatch = useAppDispatch()
 
   useShortcut('toggle_show_assistants', () => {
     toggleShowAssistants()
@@ -40,11 +43,15 @@ const HeaderNavbar: FC<Props> = ({ activeAssistant }) => {
     }
   })
 
+  useShortcut('search_message', () => {
+    SearchPopup.show()
+  })
+
   return (
     <Navbar className="home-navbar">
       {showAssistants && (
-        <NavbarLeft style={{ justifyContent: 'space-between', borderRight: 'none', padding: '0 8px' }}>
-          <NavbarIcon onClick={toggleShowAssistants} style={{ marginLeft: isMac ? 8 : 0 }}>
+        <NavbarLeft style={{ justifyContent: 'space-between', borderRight: 'none', padding: 0 }}>
+          <NavbarIcon onClick={toggleShowAssistants} style={{ marginLeft: isMac ? 16 : 0 }}>
             <i className="iconfont icon-hide-sidebar" />
           </NavbarIcon>
           <NavbarIcon onClick={() => EventEmitter.emit(EVENT_NAMES.ADD_NEW_TOPIC)}>
@@ -57,9 +64,7 @@ const HeaderNavbar: FC<Props> = ({ activeAssistant }) => {
         className="home-navbar-right">
         <HStack alignItems="center">
           {!showAssistants && (
-            <NavbarIcon
-              onClick={() => toggleShowAssistants()}
-              style={{ marginRight: isMac ? 8 : 25, marginLeft: isMac ? 4 : 0 }}>
+            <NavbarIcon onClick={() => toggleShowAssistants()} style={{ marginRight: 8, marginLeft: isMac ? 4 : -12 }}>
               <i className="iconfont icon-show-sidebar" />
             </NavbarIcon>
           )}
@@ -71,19 +76,24 @@ const HeaderNavbar: FC<Props> = ({ activeAssistant }) => {
           </TitleText>
           <SelectModelButton assistant={assistant} />
         </HStack>
-        <HStack alignItems="center">
-          <NavbarIcon onClick={() => SearchPopup.show()}>
+        <HStack alignItems="center" gap={8}>
+          <NarrowIcon onClick={() => SearchPopup.show()}>
             <SearchOutlined />
-          </NavbarIcon>
-          <AppStorePopover>
-            <NavbarIcon style={{ marginLeft: isMac ? 5 : 10 }}>
-              <i className="iconfont icon-appstore" />
-            </NavbarIcon>
-          </AppStorePopover>
+          </NarrowIcon>
+          <NarrowIcon onClick={() => dispatch(setNarrowMode(!narrowMode))}>
+            <i className="iconfont icon-icon-adaptive-width"></i>
+          </NarrowIcon>
+          {sidebarIcons.visible.includes('minapp') && (
+            <AppStorePopover>
+              <NarrowIcon>
+                <i className="iconfont icon-appstore" />
+              </NarrowIcon>
+            </AppStorePopover>
+          )}
           {topicPosition === 'right' && (
-            <NavbarIcon onClick={toggleShowTopics} style={{ marginLeft: isMac ? 5 : 10 }}>
+            <NarrowIcon onClick={toggleShowTopics}>
               <i className={`iconfont icon-${showTopics ? 'show' : 'hide'}-sidebar`} />
-            </NavbarIcon>
+            </NarrowIcon>
           )}
         </HStack>
       </NavbarRight>
@@ -128,8 +138,17 @@ export const NavbarIcon = styled.div`
 const TitleText = styled.span`
   margin-left: 5px;
   font-family: Ubuntu;
-  font-size: 13px;
+  font-size: 12px;
   user-select: none;
+  @media (max-width: 1080px) {
+    display: none;
+  }
+`
+
+const NarrowIcon = styled(NavbarIcon)`
+  @media (max-width: 1000px) {
+    display: none;
+  }
 `
 
 export default HeaderNavbar

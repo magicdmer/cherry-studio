@@ -1,11 +1,11 @@
-import { isEmbeddingModel, isSupportedModel, isVisionModel, isWebSearchModel } from '@renderer/config/models'
+import { getWebSearchParams, isEmbeddingModel, isSupportedModel, isVisionModel } from '@renderer/config/models'
 import { getStoreSetting } from '@renderer/hooks/useSettings'
 import i18n from '@renderer/i18n'
 import { getAssistantSettings, getDefaultModel, getTopNamingModel } from '@renderer/services/AssistantService'
 import { EVENT_NAMES } from '@renderer/services/EventService'
 import { filterContextMessages } from '@renderer/services/MessagesService'
 import { Assistant, FileTypes, GenerateImageParams, Message, Model, Provider, Suggestion } from '@renderer/types'
-import { removeQuotes } from '@renderer/utils'
+import { removeSpecialCharacters } from '@renderer/utils'
 import { last, takeRight } from 'lodash'
 import OpenAI, { AzureOpenAI } from 'openai'
 import {
@@ -138,8 +138,14 @@ export default class OpenAIProvider extends BaseProvider {
     }
 
     const isOpenAIo1 = model.id.includes('o1-')
-    const isSupportStreamOutput = streamOutput
     const isPlugin = assistant.subType === 'plugin'
+
+    const isSupportStreamOutput = () => {
+      if (this.provider.id === 'github' && isOpenAIo1) {
+        return false
+      }
+      return streamOutput
+    }
 
     let time_first_token_millsec = 0
     const start_time_millsec = new Date().getTime()
@@ -154,12 +160,12 @@ export default class OpenAIProvider extends BaseProvider {
       top_p: assistant?.settings?.topP,
       max_tokens: maxTokens,
       keep_alive: this.keepAliveTime,
-      stream: isSupportStreamOutput,
-      ...(isWebSearchModel(model) ? { enable_enhancement: true } : {}),
+      stream: isSupportStreamOutput(),
+      ...(assistant.enableWebSearch ? getWebSearchParams(model) : {}),
       ...this.getCustomParameters(assistant)
     })
 
-    if (!isSupportStreamOutput) {
+    if (!isSupportStreamOutput()) {
       const time_completion_millsec = new Date().getTime() - start_time_millsec
       return onChunk({
         text: stream.choices[0].message?.content || '',
@@ -245,7 +251,7 @@ export default class OpenAIProvider extends BaseProvider {
       max_tokens: 1000
     })
 
-    return removeQuotes(response.choices[0].message?.content?.substring(0, 50) || '')
+    return removeSpecialCharacters(response.choices[0].message?.content?.substring(0, 50) || '')
   }
 
   public async generateText({ prompt, content }: { prompt: string; content: string }): Promise<string> {

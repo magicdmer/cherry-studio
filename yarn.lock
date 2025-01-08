@@ -1328,7 +1328,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@langchain/core@npm:^0.3.23, @langchain/core@npm:^0.3.26":
+"@langchain/core@npm:^0.3.23, @langchain/core@npm:^0.3.25, @langchain/core@npm:^0.3.26":
   version: 0.3.27
   resolution: "@langchain/core@npm:0.3.27"
   dependencies:
@@ -1485,6 +1485,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@llm-tools/embedjs-interfaces@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs-interfaces@npm:0.1.25"
+  dependencies:
+    "@langchain/core": "npm:^0.3.25"
+    debug: "npm:^4.4.0"
+    md5: "npm:^2.3.0"
+    uuid: "npm:^11.0.3"
+  checksum: 10c0/0aea17be12d659a73425c3c7b879c658fda3f9d4bcc207f3df8a5be06386013a4ebc29fbefb00e6bb0b021f06f7daad4bccb3cfa708a027974fe48739c5d8bf3
+  languageName: node
+  linkType: hard
+
 "@llm-tools/embedjs-interfaces@npm:0.1.28":
   version: 0.1.28
   resolution: "@llm-tools/embedjs-interfaces@npm:0.1.28"
@@ -1494,6 +1506,18 @@ __metadata:
     md5: "npm:^2.3.0"
     uuid: "npm:^11.0.3"
   checksum: 10c0/51c89f2254da60aa01d911a22e8fe852564609525b95090f71385e653e42ef87b99af8d6450debfd0d5a4baa43ebeef8136109fefb09f19551a969e397d43dc1
+  languageName: node
+  linkType: hard
+
+"@llm-tools/embedjs-libsql@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs-libsql@npm:0.1.25"
+  dependencies:
+    "@libsql/client": "npm:^0.14.0"
+    "@llm-tools/embedjs-interfaces": "npm:0.1.25"
+    "@llm-tools/embedjs-utils": "npm:0.1.25"
+    debug: "npm:^4.4.0"
+  checksum: 10c0/7a21019ed4d7cb1f8eb21ae9015c31b2e9d5ee517e741b88d5660fb322fc0d6bc163070034036c58e0fc67437dd39aeb3aa30b9874ef1dd553a3c5a2c5bbbe55
   languageName: node
   linkType: hard
 
@@ -1535,6 +1559,21 @@ __metadata:
     mime: "npm:^4.0.6"
     stream-mime-type: "npm:^2.0.0"
   checksum: 10c0/e9414dde0d10afe1541bfe464b80f5cb61ec523f28dce62ab931a3f4ffde93c5589fde8e7a7f5751e7dc20d68fe2d28883925ba65e2542ee9d43002591568af1
+  languageName: node
+  linkType: hard
+
+"@llm-tools/embedjs-loader-markdown@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs-loader-markdown@npm:0.1.25"
+  dependencies:
+    "@llm-tools/embedjs-interfaces": "npm:0.1.25"
+    "@llm-tools/embedjs-loader-web": "npm:0.1.25"
+    debug: "npm:^4.4.0"
+    md5: "npm:^2.3.0"
+    micromark: "npm:^4.0.1"
+    micromark-extension-gfm: "npm:^3.0.0"
+    micromark-extension-mdx-jsx: "npm:^3.0.1"
+  checksum: 10c0/9cc540a654ece8d108766962017225167d324c40fd1911b1ccd5b749820a3b4e475ca008ef02fc0094bf698de6a87cda672168c4741d2aabb549380b0b64937c
   languageName: node
   linkType: hard
 
@@ -1606,6 +1645,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@llm-tools/embedjs-loader-web@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs-loader-web@npm:0.1.25"
+  dependencies:
+    "@langchain/textsplitters": "npm:^0.1.0"
+    "@llm-tools/embedjs-interfaces": "npm:0.1.25"
+    "@llm-tools/embedjs-utils": "npm:0.1.25"
+    debug: "npm:^4.4.0"
+    html-to-text: "npm:^9.0.5"
+    md5: "npm:^2.3.0"
+  checksum: 10c0/abbf9cc252fb928745a04152fedafc03c07eef03190e10cca830dc41e8a24b35055cb2a9011633311dcf069ffa111582b65c592e1a0ce0ae84f1b4d5e468d8b2
+  languageName: node
+  linkType: hard
+
 "@llm-tools/embedjs-loader-web@npm:0.1.28, @llm-tools/embedjs-loader-web@npm:^0.1.25":
   version: 0.1.28
   resolution: "@llm-tools/embedjs-loader-web@npm:0.1.28"
@@ -1653,12 +1706,46 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@llm-tools/embedjs-utils@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs-utils@npm:0.1.25"
+  dependencies:
+    "@llm-tools/embedjs-interfaces": "npm:0.1.25"
+  checksum: 10c0/8220181ac574e1088562f1c7913709806e6558ab02a535b888abd6267a4a03f9a45984998fddf07b4930c91a7f829458754f1da7488f453aee824de08958705a
+  languageName: node
+  linkType: hard
+
 "@llm-tools/embedjs-utils@npm:0.1.28":
   version: 0.1.28
   resolution: "@llm-tools/embedjs-utils@npm:0.1.28"
   dependencies:
     "@llm-tools/embedjs-interfaces": "npm:0.1.28"
   checksum: 10c0/7d97b36be831d894102fed34a7e7078eade509b4fbd78d991160f60b2d2d8f3136e6ad93edcf64a3d2b7be346c83cdae9b0ecb63d35aa02eb38dfb4f9cff6117
+  languageName: node
+  linkType: hard
+
+"@llm-tools/embedjs-utils@patch:@llm-tools/embedjs-utils@npm%3A0.1.25#~/.yarn/patches/@llm-tools-embedjs-utils-npm-0.1.25-fd8fe8a193.patch":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs-utils@patch:@llm-tools/embedjs-utils@npm%3A0.1.25#~/.yarn/patches/@llm-tools-embedjs-utils-npm-0.1.25-fd8fe8a193.patch::version=0.1.25&hash=faf2ca"
+  dependencies:
+    "@llm-tools/embedjs-interfaces": "npm:0.1.25"
+  checksum: 10c0/c639f64a26023b21b2cd8b2bf5007541f4b1382ac3358d9404a531fcee66482ea94fe151b7d39b44a6cb903b975eb379101c4cca896d8a08a070330355e67c19
+  languageName: node
+  linkType: hard
+
+"@llm-tools/embedjs@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@llm-tools/embedjs@npm:0.1.25"
+  dependencies:
+    "@langchain/textsplitters": "npm:^0.1.0"
+    "@llm-tools/embedjs-interfaces": "npm:0.1.25"
+    "@llm-tools/embedjs-utils": "npm:0.1.25"
+    debug: "npm:^4.4.0"
+    langchain: "npm:^0.3.7"
+    md5: "npm:^2.3.0"
+    mime: "npm:^4.0.6"
+    stream-mime-type: "npm:^2.0.0"
+  checksum: 10c0/8a6afefbd8e304c037104eddf0fe35086165eb3a381b866e874bf6901c2da8a6dfc76d3d7eb027f7c694a163133154e3be7be777c362119a48925a6b56cce5db
   languageName: node
   linkType: hard
 
@@ -10114,6 +10201,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"openai@npm:4.76.2, openai@patch:openai@npm%3A4.76.2#~/.yarn/patches/openai-npm-4.76.2-8ff1374617.patch":
+  version: 4.76.2
+  resolution: "openai@npm:4.76.2"
+  dependencies:
+    "@types/node": "npm:^18.11.18"
+    "@types/node-fetch": "npm:^2.6.4"
+    abort-controller: "npm:^3.0.0"
+    agentkeepalive: "npm:^4.2.1"
+    form-data-encoder: "npm:1.7.2"
+    formdata-node: "npm:^4.3.2"
+    node-fetch: "npm:^2.6.7"
+  peerDependencies:
+    zod: ^3.23.8
+  peerDependenciesMeta:
+    zod:
+      optional: true
+  bin:
+    openai: bin/cli
+  checksum: 10c0/d78af0c2dd64ad24a2ce92deb92656b742b8120012e554fd562095f237ce06d84764217e040b437f955c6f26b7675f9321862a8937c8537f28ed6ead4b674559
+  languageName: node
+  linkType: hard
+
 "openai@npm:^4.77.0":
   version: 4.77.3
   resolution: "openai@npm:4.77.3"
@@ -10133,28 +10242,6 @@ __metadata:
   bin:
     openai: bin/cli
   checksum: 10c0/b90a4071cc1a8257339e3001377396226422519d168ae3c05b5abc662bbac2009c5ccd37f0112c431b0ce45d83e616305ee264846ddb2f2129f186faf9b5a8cc
-  languageName: node
-  linkType: hard
-
-"openai@patch:openai@npm%3A4.76.2#~/.yarn/patches/openai-npm-4.76.2-8ff1374617.patch":
-  version: 4.76.2
-  resolution: "openai@npm:4.76.2"
-  dependencies:
-    "@types/node": "npm:^18.11.18"
-    "@types/node-fetch": "npm:^2.6.4"
-    abort-controller: "npm:^3.0.0"
-    agentkeepalive: "npm:^4.2.1"
-    form-data-encoder: "npm:1.7.2"
-    formdata-node: "npm:^4.3.2"
-    node-fetch: "npm:^2.6.7"
-  peerDependencies:
-    zod: ^3.23.8
-  peerDependenciesMeta:
-    zod:
-      optional: true
-  bin:
-    openai: bin/cli
-  checksum: 10c0/d78af0c2dd64ad24a2ce92deb92656b742b8120012e554fd562095f237ce06d84764217e040b437f955c6f26b7675f9321862a8937c8537f28ed6ead4b674559
   languageName: node
   linkType: hard
 

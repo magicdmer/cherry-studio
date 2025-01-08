@@ -48,7 +48,7 @@ const AssistantSettingPopupContainer: React.FC<Props> = ({ resolve, ...props }) 
   const items = [
     {
       key: 'prompt',
-      label: assistant.subType === 'normal' ? t('assistants.settings.prompt') : t('assistants.settings.plugin')
+      label: assistant.subType === 'plugin' ? t('assistants.settings.plugin') : t('assistants.settings.prompt')
     },
     {
       key: 'model',

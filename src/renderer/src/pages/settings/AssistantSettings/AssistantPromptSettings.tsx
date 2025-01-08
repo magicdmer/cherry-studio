@@ -36,9 +36,16 @@ const AssistantPromptSettings: React.FC<Props> = ({ assistant, updateAssistant, 
         onBlur={onUpdate}
       />
       <Box mt={8} mb={8} style={{ fontWeight: 'bold' }}>
-        {assistant.subType === 'normal' ? t('common.prompt') : t('common.pluginId')}
+        {assistant.subType === 'plugin' ? t('common.pluginId') : t('common.prompt')}
       </Box>
-      {assistant.subType === 'normal' ? (
+      {assistant.subType === 'plugin' ? (
+        <Input
+          placeholder={t('common.assistant') + t('common.pluginId')}
+          value={pluginId}
+          onChange={(e) => setPluginId(e.target.value)}
+          onBlur={onUpdate}
+        />
+      ) : (
         <TextArea
           rows={10}
           placeholder={t('common.assistant') + t('common.prompt')}
@@ -46,13 +53,6 @@ const AssistantPromptSettings: React.FC<Props> = ({ assistant, updateAssistant, 
           onChange={(e) => setPrompt(e.target.value)}
           onBlur={onUpdate}
           style={{ minHeight: 'calc(80vh - 200px)', maxHeight: 'calc(80vh - 150px)' }}
-        />
-      ) : (
-        <Input
-          placeholder={t('common.assistant') + t('common.pluginId')}
-          value={pluginId}
-          onChange={(e) => setPluginId(e.target.value)}
-          onBlur={onUpdate}
         />
       )}
       <HStack width="100%" justifyContent="flex-end" mt="10px">

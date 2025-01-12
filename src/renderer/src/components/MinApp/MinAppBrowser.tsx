@@ -16,27 +16,33 @@ const MinAppBrowser: React.FC = React.memo(() => {
     }
   }, [])
 
-  const activeTab = React.useMemo(() => {
-    if (!mountedRef.current) return null
-    try {
-      return tabs.find((tab) => tab.id === activeTabId)
-    } catch (error) {
-      console.error('Error finding active tab:', error)
-      return null
-    }
-  }, [tabs, activeTabId])
-
-  // 使用useMemo缓存子组件
+  // 渲染所有标签页的webview，通过CSS控制显示/隐藏
   const content = React.useMemo(() => {
     if (!mountedRef.current) return null
     try {
-      if (!activeTab) return null
-      return activeTab.isHome ? <MinAppHome /> : <MinAppWebView key={activeTab.id} tab={activeTab} />
+      // 分别渲染主页和webview内容
+      const homeContent = tabs
+        .filter((tab) => tab.isHome)
+        .map((tab) => (
+          <TabContainer key={tab.id} active={tab.id === activeTabId}>
+            <MinAppHome />
+          </TabContainer>
+        ))
+
+      const webviewContent = tabs
+        .filter((tab) => !tab.isHome)
+        .map((tab) => (
+          <TabContainer key={tab.id} active={tab.id === activeTabId}>
+            <MinAppWebView tab={tab} />
+          </TabContainer>
+        ))
+
+      return [...homeContent, ...webviewContent]
     } catch (error) {
       console.error('Error rendering content:', error)
       return null
     }
-  }, [activeTab])
+  }, [tabs, activeTabId])
 
   if (!browserVisible) {
     return null
@@ -45,7 +51,7 @@ const MinAppBrowser: React.FC = React.memo(() => {
   return (
     <Container style={{ display: browserVisible ? 'flex' : 'none' }}>
       <MinAppTabs />
-      {content}
+      <WebViewContainer>{content}</WebViewContainer>
     </Container>
   )
 })
@@ -64,6 +70,24 @@ const Container = styled.div`
   bottom: 0;
   z-index: 100;
   pointer-events: auto;
+`
+
+const WebViewContainer = styled.div`
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+`
+
+const TabContainer = styled.div<{ active: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: ${(props) => (props.active ? 'flex' : 'none')};
+  flex: 1;
+  overflow: hidden;
 `
 
 MinAppBrowser.displayName = 'MinAppBrowser'

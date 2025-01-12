@@ -55,6 +55,12 @@ const MinAppTabs: React.FC = React.memo(() => {
         return
       }
 
+      if (typeof webview.getWebContents !== 'function') {
+        console.warn('getWebContents is not available yet')
+        message.error('网页内容尚未准备就绪，请稍后重试')
+        return
+      }
+
       let webContents: any = null
       try {
         webContents = webview.getWebContents()
@@ -70,10 +76,20 @@ const MinAppTabs: React.FC = React.memo(() => {
       }
 
       try {
+        // 只清除当前网站的本地存储数据，保留cookie
         await webContents.session.clearStorageData({
-          storages: ['cookies', 'localstorage', 'caches', 'indexdb', 'serviceworkers']
+          storages: ['localstorage', 'caches', 'indexdb', 'serviceworkers'],
+          origin: new URL(tab.url).origin
         })
-        message.success('已清除网站数据')
+
+        // 可选：清除当前网站的cookie
+        const currentUrl = new URL(tab.url)
+        await webContents.session.clearStorageData({
+          storages: ['cookies'],
+          origin: currentUrl.origin
+        })
+
+        message.success('已清除当前网站数据')
         webview.reload()
       } catch (error) {
         console.error('Error clearing storage data:', error)

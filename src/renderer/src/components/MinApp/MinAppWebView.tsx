@@ -24,44 +24,6 @@ const MinAppWebView: FC<Props> = ({ tab }) => {
   const mountedRef = useRef(true)
   const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const webContentsRef = useRef<any>(null)
-  const redirectCountRef = useRef<number>(0)
-  const auth0StateRef = useRef<{ lastUrl: string; timestamp: number } | null>(null)
-
-  // 检查是否是身份验证相关的URL
-  const isAuthUrl = (url: string) => {
-    try {
-      const urlObj = new URL(url)
-      return (
-        urlObj.hostname.includes('accounts.google.com') ||
-        urlObj.hostname.includes('auth0.openai.com') ||
-        urlObj.hostname.includes('auth.openai.com') ||
-        urlObj.hostname.includes('auth.claude.ai') ||
-        urlObj.hostname.includes('id.grok.x') ||
-        urlObj.hostname.includes('auth0.com') ||
-        url.includes('oauth') ||
-        url.includes('login') ||
-        url.includes('signin') ||
-        url.includes('sso')
-      )
-    } catch {
-      return false
-    }
-  }
-
-  // 检查是否是验证码相关的URL
-  const isCaptchaUrl = (url: string) => {
-    try {
-      return (
-        url.includes('captcha') ||
-        url.includes('challenge') ||
-        url.includes('cloudflare') ||
-        url.includes('hcaptcha') ||
-        url.includes('recaptcha')
-      )
-    } catch {
-      return false
-    }
-  }
 
   // 清理函数只在标签页真正关闭时调用
   const cleanupWebview = useCallback(() => {
@@ -161,125 +123,103 @@ const MinAppWebView: FC<Props> = ({ tab }) => {
     }
   }
 
+  // 安全地添加事件监听器
+  const safeAddEventListener = (webview: WebviewElement, event: string, handler: (event: any) => void) => {
+    try {
+      webview.addEventListener(event, handler)
+    } catch (error) {
+      console.error(`Error adding ${event} listener:`, error)
+    }
+  }
+
+  // 安全地移除事件监听器
+  const safeRemoveEventListener = (webview: WebviewElement, event: string, handler: (event: any) => void) => {
+    try {
+      if (webview) {
+        webview.removeEventListener(event, handler)
+      }
+    } catch (error) {
+      console.error(`Error removing ${event} listener:`, error)
+    }
+  }
+
   useEffect(() => {
     const webview = webviewRef.current
     if (!webview || !mountedRef.current) {
       return undefined
     }
 
-    const handleNewWindow = (event: any) => {
-      if (!mountedRef.current || !webview) return
-      try {
-        event.preventDefault()
-        const url = event.url
+    // 处理加载错误
+    const handleLoadFail = (event: any) => {
+      console.log('Load failed:', event)
+      if (event.errorCode === -2 && event.validatedURL.includes('featurebase.app')) {
+        // 对于特定域名的加载失败，我们可以选择忽略
+        console.log('Ignoring non-critical resource load failure')
+        return
+      }
 
-        // 对于身份验证和验证码相关的URL，允许在新窗口中打开
-        if (isAuthUrl(url) || isCaptchaUrl(url)) {
-          // 使用默认浏览器打开身份验证页面
-          window.open(url, '_blank', 'nodeIntegration=no,contextIsolation=yes')
-        } else {
-          // 其他URL在当前webview中打开
-          webview.loadURL(url)
-        }
-      } catch (error) {
-        console.error('Error handling new window:', error)
+      if (event.errorCode === -2) {
+        // 对于其他 -2 错误，可能是由于安全策略导致的
+        console.log('Resource blocked by security policy:', event.validatedURL)
+        return
       }
     }
 
-    const handleRedirect = (event: any) => {
-      if (!mountedRef.current || !webview) return
-      try {
-        const currentUrl = new URL(tab.url)
-        const newUrl = new URL(event.url)
-        const currentTime = Date.now()
+    // 处理加载完成
+    const handleLoadCommit = () => {
+      console.log('Page load committed')
+    }
 
-        // 处理身份验证相关的重定向
-        if (isAuthUrl(event.url)) {
-          // 检查是否是重复的重定向
-          if (auth0StateRef.current && auth0StateRef.current.lastUrl === event.url) {
-            const timeDiff = currentTime - auth0StateRef.current.timestamp
-            if (timeDiff < 2000) {
-              redirectCountRef.current += 1
-              if (redirectCountRef.current > 2) {
-                // 如果短时间内重定向次数过多，可能是循环重定向，尝试在新窗口中打开
-                event.preventDefault()
-                window.open(event.url, '_blank', 'nodeIntegration=no,contextIsolation=yes')
-                return
-              }
-            } else {
-              // 重置计数器，但保留URL
-              redirectCountRef.current = 0
-              auth0StateRef.current.timestamp = currentTime
-            }
-          } else {
-            // 新的认证URL
-            auth0StateRef.current = {
-              lastUrl: event.url,
-              timestamp: currentTime
-            }
-            redirectCountRef.current = 0
-          }
-          return // 允许认证相关的重定向
-        }
-
-        // 允许同域名跳转
-        if (currentUrl.origin === newUrl.origin) {
+    // 处理did-fail-load事件
+    const handleDidFailLoad = (event: any) => {
+      console.log('Did fail load:', event)
+      if (event.errorCode === -2) {
+        // 特殊处理某些资源加载失败的情况
+        if (event.validatedURL.includes('featurebase.app')) {
+          console.log('Non-critical resource load failure, continuing...')
           return
         }
-
-        // 对于验证码，也允许在新窗口中打开
-        if (isCaptchaUrl(event.url)) {
-          event.preventDefault()
-          window.open(event.url, '_blank', 'nodeIntegration=no,contextIsolation=yes')
-          return
-        }
-
-        // 其他重定向在当前webview中处理
-        event.preventDefault()
-        setTimeout(() => {
-          try {
-            if (mountedRef.current && webview) {
-              webview.loadURL(event.url)
-            }
-          } catch (error) {
-            console.error('Error loading redirected URL:', error)
-          }
-        }, 100)
-      } catch (error) {
-        console.error('Error handling redirect:', error)
       }
     }
 
-    const safeAddEventListener = (event: string, handler: (event: any) => void) => {
-      try {
-        webview.addEventListener(event, handler)
-      } catch (error) {
-        console.error(`Error adding ${event} listener:`, error)
-      }
+    // 处理did-finish-load事件
+    const handleDidFinishLoad = () => {
+      console.log('Page finished loading')
+      // 注入一些错误处理代码
+      webview
+        .executeJavaScript(
+          `
+        window.addEventListener('error', (event) => {
+          console.log('Page error:', event);
+          event.preventDefault();
+          return false;
+        });
+        window.addEventListener('unhandledrejection', (event) => {
+          console.log('Unhandled promise rejection:', event);
+          event.preventDefault();
+          return false;
+        });
+      `
+        )
+        .catch(console.error)
     }
 
-    const safeRemoveEventListener = (event: string, handler: (event: any) => void) => {
-      try {
-        if (webview) {
-          webview.removeEventListener(event, handler)
-        }
-      } catch (error) {
-        console.error(`Error removing ${event} listener:`, error)
-      }
-    }
-
-    safeAddEventListener('new-window', handleNewWindow)
-    safeAddEventListener('will-navigate', handleRedirect)
-    safeAddEventListener('did-navigate', handleRedirect)
+    // 添加事件监听
+    safeAddEventListener(webview, 'did-fail-load', handleDidFailLoad)
+    safeAddEventListener(webview, 'did-finish-load', handleDidFinishLoad)
+    safeAddEventListener(webview, 'load-commit', handleLoadCommit)
+    safeAddEventListener(webview, 'did-fail-provisional-load', handleLoadFail)
 
     return () => {
       if (!mountedRef.current) return
-      safeRemoveEventListener('new-window', handleNewWindow)
-      safeRemoveEventListener('will-navigate', handleRedirect)
-      safeRemoveEventListener('did-navigate', handleRedirect)
+      safeRemoveEventListener(webview, 'did-fail-load', handleDidFailLoad)
+      safeRemoveEventListener(webview, 'did-finish-load', handleDidFinishLoad)
+      safeRemoveEventListener(webview, 'load-commit', handleLoadCommit)
+      safeRemoveEventListener(webview, 'did-fail-provisional-load', handleLoadFail)
     }
-  }, [tab.id, tab.url])
+  }, [])
 
+  // 修改webview配置
   return (
     <Container
       style={{
@@ -303,9 +243,13 @@ const MinAppWebView: FC<Props> = ({ tab }) => {
             height: '100%',
             display: 'flex'
           },
-          allowpopups: true,
+          allowpopups: 'true',
           partition: 'persist:shared',
-          webpreferences: 'nodeIntegration=no, contextIsolation=yes, javascript=yes, backgroundThrottling=false'
+          webpreferences:
+            'nodeIntegration=no, contextIsolation=yes, javascript=yes, backgroundThrottling=false, webSecurity=yes, allowRunningInsecureContent=no, plugins=yes, webgl=yes, experimentalFeatures=yes',
+          httpreferrer: 'strict-origin-when-cross-origin',
+          useragent:
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         } as any)}
       />
     </Container>

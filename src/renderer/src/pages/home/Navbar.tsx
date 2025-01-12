@@ -1,7 +1,6 @@
 import { FormOutlined, SearchOutlined } from '@ant-design/icons'
 import { Navbar, NavbarLeft, NavbarRight } from '@renderer/components/app/Navbar'
 import { HStack } from '@renderer/components/Layout'
-import AppStorePopover from '@renderer/components/Popups/AppStorePopover'
 import SearchPopup from '@renderer/components/Popups/SearchPopup'
 import { isMac, isWindows } from '@renderer/config/constant'
 import { useAssistant } from '@renderer/hooks/useAssistant'
@@ -83,13 +82,6 @@ const HeaderNavbar: FC<Props> = ({ activeAssistant }) => {
           <NarrowIcon onClick={() => dispatch(setNarrowMode(!narrowMode))}>
             <i className="iconfont icon-icon-adaptive-width"></i>
           </NarrowIcon>
-          {sidebarIcons.visible.includes('minapp') && (
-            <AppStorePopover>
-              <NarrowIcon>
-                <i className="iconfont icon-appstore" />
-              </NarrowIcon>
-            </AppStorePopover>
-          )}
           {topicPosition === 'right' && (
             <NarrowIcon onClick={toggleShowTopics}>
               <i className={`iconfont icon-${showTopics ? 'show' : 'hide'}-sidebar`} />

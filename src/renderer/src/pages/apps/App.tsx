@@ -5,14 +5,12 @@ import styled from 'styled-components'
 
 interface Props {
   app: MinAppType
-  onClick?: () => void
   size?: number
 }
 
-const App: FC<Props> = ({ app, onClick, size = 60 }) => {
+const App: FC<Props> = ({ app, size = 60 }) => {
   const handleClick = () => {
-    MinApp.start(app)
-    onClick?.()
+    MinApp.start()
   }
 
   return (

@@ -26,6 +26,7 @@ type ElementItem = {
 const TopViewContainer: React.FC<Props> = ({ children }) => {
   const [elements, setElements] = useState<ElementItem[]>([])
   const elementsRef = useRef<ElementItem[]>([])
+  const mountedRef = useRef(true)
   elementsRef.current = elements
 
   const [messageApi, messageContextHolder] = message.useMessage()
@@ -36,30 +37,59 @@ const TopViewContainer: React.FC<Props> = ({ children }) => {
   useEffect(() => {
     window.message = messageApi
     window.modal = modal
+
+    return () => {
+      mountedRef.current = false
+      // 清理所有元素
+      elementsRef.current = []
+      setElements([])
+    }
   }, [messageApi, modal])
 
   onPop = () => {
-    const views = [...elementsRef.current]
-    views.pop()
-    elementsRef.current = views
-    setElements(elementsRef.current)
+    if (!mountedRef.current) return
+    try {
+      const views = [...elementsRef.current]
+      views.pop()
+      elementsRef.current = views
+      setElements(elementsRef.current)
+    } catch (error) {
+      console.error('Error in TopView pop:', error)
+    }
   }
 
   onShow = ({ element, id }: ElementItem) => {
-    if (!elementsRef.current.find((el) => el.id === id)) {
-      elementsRef.current = elementsRef.current.concat([{ element, id }])
-      setElements(elementsRef.current)
+    if (!mountedRef.current) return
+    try {
+      if (!elementsRef.current.find((el) => el.id === id)) {
+        const newElements = elementsRef.current.concat([{ element, id }])
+        elementsRef.current = newElements
+        setElements(newElements)
+      }
+    } catch (error) {
+      console.error('Error in TopView show:', error)
     }
   }
 
   onHide = (id: string) => {
-    elementsRef.current = elementsRef.current.filter((el) => el.id !== id)
-    setElements(elementsRef.current)
+    if (!mountedRef.current) return
+    try {
+      const filteredElements = elementsRef.current.filter((el) => el.id !== id)
+      elementsRef.current = filteredElements
+      setElements(filteredElements)
+    } catch (error) {
+      console.error('Error in TopView hide:', error)
+    }
   }
 
   onHideAll = () => {
-    setElements([])
-    elementsRef.current = []
+    if (!mountedRef.current) return
+    try {
+      setElements([])
+      elementsRef.current = []
+    } catch (error) {
+      console.error('Error in TopView hideAll:', error)
+    }
   }
 
   const FullScreenContainer: React.FC<PropsWithChildren> = useCallback(({ children }) => {

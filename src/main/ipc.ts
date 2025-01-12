@@ -175,4 +175,28 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   ipcMain.handle('gemini:retrieve-file', GeminiService.retrieveFile)
   ipcMain.handle('gemini:list-files', GeminiService.listFiles)
   ipcMain.handle('gemini:delete-file', GeminiService.deleteFile)
+
+  // Configure webview session
+  const webviewSession = session.fromPartition('persist:webview')
+  webviewSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({
+      cancel: false,
+      requestHeaders: {
+        ...details.requestHeaders,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    })
+  })
+
+  webviewSession.webRequest.onHeadersReceived({ urls: ['*://*/*'] }, (details, callback) => {
+    if (details.responseHeaders) {
+      // 移除可能影响跨域的响应头
+      delete details.responseHeaders['X-Frame-Options']
+      delete details.responseHeaders['x-frame-options']
+      delete details.responseHeaders['Content-Security-Policy']
+      delete details.responseHeaders['content-security-policy']
+    }
+    callback({ cancel: false, responseHeaders: details.responseHeaders })
+  })
 }

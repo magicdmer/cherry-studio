@@ -1,10 +1,15 @@
-import { CloseOutlined, HomeOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { CloseOutlined, DeleteOutlined, HomeOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import store from '@renderer/store'
 import { useAppSelector } from '@renderer/store'
 import { addMinappTab, closeMinappTab, setActiveMinappTab } from '@renderer/store/runtime'
-import { Dropdown, Menu, Tooltip } from 'antd'
+import { Dropdown, Menu, message, Tooltip } from 'antd'
 import * as React from 'react'
 import styled from 'styled-components'
+
+interface WebviewElement extends HTMLElement {
+  getWebContents: () => any
+  reload: () => void
+}
 
 const MinAppTabs: React.FC = React.memo(() => {
   const { tabs, activeTabId } = useAppSelector((state) => state.runtime.minapp)
@@ -33,22 +38,92 @@ const MinAppTabs: React.FC = React.memo(() => {
     )
   }, [])
 
-  const getContextMenu = React.useCallback((tab: any) => {
-    const items = [
-      {
-        key: 'refresh',
-        icon: <ReloadOutlined />,
-        label: '刷新',
-        onClick: () => {
-          const webview = document.querySelector(`webview[data-tab-id="${tab.id}"]`) as any
-          if (webview) {
-            webview.reload()
-          }
-        }
-      }
-    ]
-    return <Menu items={items} />
+  const safeGetWebview = React.useCallback((tabId: string): WebviewElement | null => {
+    try {
+      return document.querySelector(`webview[data-tab-id="${tabId}"]`) as WebviewElement
+    } catch (error) {
+      console.error('Error getting webview:', error)
+      return null
+    }
   }, [])
+
+  const clearCookies = React.useCallback(async (tab: any) => {
+    try {
+      const webview = safeGetWebview(tab.id)
+      if (!webview) {
+        message.error('无法访问网页内容')
+        return
+      }
+
+      let webContents: any = null
+      try {
+        webContents = webview.getWebContents()
+      } catch (error) {
+        console.error('Error getting WebContents:', error)
+        message.error('无法访问网页内容')
+        return
+      }
+
+      if (!webContents || !webContents.session) {
+        message.error('无法访问网页内容')
+        return
+      }
+
+      try {
+        await webContents.session.clearStorageData({
+          storages: ['cookies', 'localstorage', 'caches', 'indexdb', 'serviceworkers']
+        })
+        message.success('已清除网站数据')
+        webview.reload()
+      } catch (error) {
+        console.error('Error clearing storage data:', error)
+        message.error('清除网站数据失败')
+      }
+    } catch (error) {
+      console.error('Error in clearCookies:', error)
+      message.error('操作失败')
+    }
+  }, [])
+
+  const reloadTab = React.useCallback(
+    (tab: any) => {
+      try {
+        const webview = safeGetWebview(tab.id)
+        if (webview) {
+          webview.reload()
+        }
+      } catch (error) {
+        console.error('Error reloading tab:', error)
+        message.error('刷新失败')
+      }
+    },
+    [safeGetWebview]
+  )
+
+  const getContextMenu = React.useCallback(
+    (tab: any) => {
+      if (tab.isHome) {
+        return <Menu items={[]} />
+      }
+
+      const items = [
+        {
+          key: 'refresh',
+          icon: <ReloadOutlined />,
+          label: '刷新',
+          onClick: () => reloadTab(tab)
+        },
+        {
+          key: 'clearCookies',
+          icon: <DeleteOutlined />,
+          label: '清除网站数据',
+          onClick: () => clearCookies(tab)
+        }
+      ]
+      return <Menu items={items} />
+    },
+    [clearCookies, reloadTab]
+  )
 
   // 使用useMemo缓存标签页列表的渲染
   const tabElements = React.useMemo(() => {

@@ -1,6 +1,6 @@
 import MinApp from '@renderer/components/MinApp'
 import { Provider } from '@renderer/types'
-import { Button } from 'antd'
+import { Button, message } from 'antd'
 import { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
@@ -16,8 +16,13 @@ const GraphRAGSettings: FC<Props> = ({ provider }) => {
   const { t } = useTranslation()
 
   const onShowGraphRAG = async () => {
-    await window.api.getAppInfo()
-    MinApp.start()
+    try {
+      await window.api.getAppInfo()
+      await MinApp.start()
+    } catch (error) {
+      console.error('Failed to show GraphRAG:', error)
+      message.error(t('errors.operationFailed'))
+    }
   }
 
   if (!modalId) {

@@ -9,7 +9,7 @@ import styled from 'styled-components'
 const MinAppTabs: React.FC = React.memo(() => {
   const { tabs, activeTabId } = useAppSelector((state) => state.runtime.minapp)
 
-  const onTabClick = React.useCallback((e: React.MouseEvent, tabId: string) => {
+  const onTabClick = React.useCallback((_: React.MouseEvent, tabId: string) => {
     store.dispatch(setActiveMinappTab(tabId))
   }, [])
 

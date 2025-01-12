@@ -10,7 +10,6 @@ import { useSettings } from '@renderer/hooks/useSettings'
 import { useAppDispatch } from '@renderer/store'
 import { setUpdateState } from '@renderer/store/runtime'
 import { setManualUpdateCheck } from '@renderer/store/settings'
-import { ThemeMode } from '@renderer/types'
 import { compareVersions, runAsyncFunction } from '@renderer/utils'
 import { Avatar, Button, Progress, Row, Switch, Tag } from 'antd'
 import { debounce } from 'lodash'
@@ -64,21 +63,13 @@ const AboutSettings: FC = () => {
   }
 
   const showLicense = async () => {
-    const { appPath } = await window.api.getAppInfo()
-    MinApp.start({
-      name: t('settings.about.license.title'),
-      url: `file://${appPath}/resources/cherry-studio/license.html`,
-      logo: AppLogo
-    })
+    await window.api.getAppInfo()
+    MinApp.start()
   }
 
   const showReleases = async () => {
-    const { appPath } = await window.api.getAppInfo()
-    MinApp.start({
-      name: t('settings.about.releases.title'),
-      url: `file://${appPath}/resources/cherry-studio/releases.html?theme=${theme === ThemeMode.dark ? 'dark' : 'light'}`,
-      logo: AppLogo
-    })
+    await window.api.getAppInfo()
+    MinApp.start()
   }
 
   const hasNewVersion = update?.info?.version && version ? compareVersions(update.info.version, version) > 0 : false

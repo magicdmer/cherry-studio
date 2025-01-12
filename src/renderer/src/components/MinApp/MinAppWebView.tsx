@@ -21,35 +21,37 @@ const MinAppWebView: FC<Props> = ({ tab }) => {
   useEffect(() => {
     const webview = webviewRef.current
 
-    if (webview) {
-      const handleDomReady = () => {
-        webview.setUserAgent(
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        )
+    if (!webview) {
+      return undefined
+    }
+
+    const handleDomReady = () => {
+      webview.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      )
+    }
+
+    const handleNewWindow = (event: any) => {
+      event.preventDefault()
+      webview.loadURL(event.url)
+    }
+
+    webview.addEventListener('dom-ready', handleDomReady)
+    webview.addEventListener('new-window', handleNewWindow)
+    webview.addEventListener('will-navigate', (event: any) => {
+      const currentUrl = new URL(tab.url)
+      const newUrl = new URL(event.url)
+      if (currentUrl.origin === newUrl.origin) {
+        return
       }
 
-      const handleNewWindow = (event: any) => {
-        event.preventDefault()
-        webview.loadURL(event.url)
-      }
+      event.preventDefault()
+      webview.loadURL(event.url)
+    })
 
-      webview.addEventListener('dom-ready', handleDomReady)
-      webview.addEventListener('new-window', handleNewWindow)
-      webview.addEventListener('will-navigate', (event: any) => {
-        const currentUrl = new URL(tab.url)
-        const newUrl = new URL(event.url)
-        if (currentUrl.origin === newUrl.origin) {
-          return
-        }
-
-        event.preventDefault()
-        webview.loadURL(event.url)
-      })
-
-      return () => {
-        webview.removeEventListener('dom-ready', handleDomReady)
-        webview.removeEventListener('new-window', handleNewWindow)
-      }
+    return () => {
+      webview.removeEventListener('dom-ready', handleDomReady)
+      webview.removeEventListener('new-window', handleNewWindow)
     }
   }, [tab.id])
 
@@ -60,18 +62,19 @@ const MinAppWebView: FC<Props> = ({ tab }) => {
   return (
     <Container>
       <webview
-        src={tab.url}
-        ref={webviewRef as any}
-        data-tab-id={tab.id}
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex'
-        }}
-        partition="persist:minapp"
-        webpreferences="contextIsolation=no, webSecurity=no"
-        allowpopups="true"
-        backgroundthrottling="false"
+        {...({
+          src: tab.url,
+          ref: webviewRef,
+          'data-tab-id': tab.id,
+          style: {
+            width: '100%',
+            height: '100%',
+            display: 'flex'
+          },
+          partition: 'persist:minapp',
+          webpreferences: 'contextIsolation=no, webSecurity=no',
+          allowpopups: true
+        } as any)}
       />
     </Container>
   )

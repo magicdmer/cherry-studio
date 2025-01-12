@@ -261,6 +261,6 @@ export function getAllMinApps() {
 }
 
 export function startMinAppById(id: string) {
-  const app = getAllMinApps().find((app) => app?.id === id)
-  app && MinApp.start(app)
+  const app = _apps.find((app) => app.id === id)
+  app && MinApp.start()
 }

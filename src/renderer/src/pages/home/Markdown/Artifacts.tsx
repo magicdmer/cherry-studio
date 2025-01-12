@@ -1,6 +1,5 @@
 import { DownloadOutlined, ExpandOutlined } from '@ant-design/icons'
 import MinApp from '@renderer/components/MinApp'
-import { AppLogo } from '@renderer/config/env'
 import { extractTitle } from '@renderer/utils/formula'
 import { Button } from 'antd'
 import { FC } from 'react'
@@ -19,11 +18,7 @@ const Artifacts: FC<Props> = ({ html }) => {
     const path = await window.api.file.create('artifacts-preview.html')
     await window.api.file.write(path, html)
 
-    MinApp.start({
-      name: title,
-      logo: AppLogo,
-      url: `file://${path}`
-    })
+    MinApp.start()
   }
 
   const onDownload = () => {

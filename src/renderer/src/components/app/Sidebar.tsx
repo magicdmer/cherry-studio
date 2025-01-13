@@ -5,6 +5,8 @@ import { useTheme } from '@renderer/context/ThemeProvider'
 import useAvatar from '@renderer/hooks/useAvatar'
 import { modelGenerating, useRuntime } from '@renderer/hooks/useRuntime'
 import { useSettings } from '@renderer/hooks/useSettings'
+import store from '@renderer/store'
+import { setMinappShow } from '@renderer/store/runtime'
 import { Tooltip } from 'antd'
 import { Avatar } from 'antd'
 import { FC } from 'react'
@@ -34,6 +36,20 @@ const Sidebar: FC = () => {
 
   const to = async (path: string) => {
     await modelGenerating()
+
+    // 如果当前在小程序页面，且点击了其他标签
+    if (minappShow && path !== '/apps') {
+      // 隐藏小程序但不重置状态
+      store.dispatch(setMinappShow(false))
+      MinApp.close()
+    }
+
+    // 如果点击了小程序标签且小程序当前隐藏
+    if (path === '/apps' && !minappShow) {
+      store.dispatch(setMinappShow(true))
+      MinApp.start() // 直接启动MinAppBrowser
+    }
+
     navigate(path)
   }
 
@@ -81,9 +97,9 @@ const Sidebar: FC = () => {
       }}>
       <AvatarImg src={avatar || UserAvatar} draggable={false} className="nodrag" onClick={onEditUser} />
       <MainMenus>
-        <Menus onClick={MinApp.onClose}>{renderMainMenus()}</Menus>
+        <Menus>{renderMainMenus()}</Menus>
       </MainMenus>
-      <Menus onClick={MinApp.onClose}>
+      <Menus>
         <Tooltip title={t('settings.theme.title')} mouseEnterDelay={0.8} placement="right">
           <Icon onClick={() => toggleTheme()}>
             {theme === 'dark' ? (

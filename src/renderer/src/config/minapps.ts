@@ -8,6 +8,7 @@ import FeloAppLogo from '@renderer/assets/images/apps/felo.png'
 import GeminiAppLogo from '@renderer/assets/images/apps/gemini.png'
 import GensparkLogo from '@renderer/assets/images/apps/genspark.jpg'
 import GithubCopilotLogo from '@renderer/assets/images/apps/github-copilot.webp'
+import GrokAppLogo from '@renderer/assets/images/apps/grok.png'
 import HikaLogo from '@renderer/assets/images/apps/hika.webp'
 import HuggingChatLogo from '@renderer/assets/images/apps/huggingchat.svg'
 import KimiAppLogo from '@renderer/assets/images/apps/kimi.jpg'
@@ -18,6 +19,7 @@ import PoeAppLogo from '@renderer/assets/images/apps/poe.webp'
 import ZhipuProviderLogo from '@renderer/assets/images/apps/qingyan.png'
 import SensetimeAppLogo from '@renderer/assets/images/apps/sensetime.png'
 import SparkDeskAppLogo from '@renderer/assets/images/apps/sparkdesk.png'
+import TelegramWebLogo from '@renderer/assets/images/apps/tg.png'
 import ThinkAnyLogo from '@renderer/assets/images/apps/thinkany.webp'
 import TiangongAiLogo from '@renderer/assets/images/apps/tiangong.png'
 import WanZhiAppLogo from '@renderer/assets/images/apps/wanzhi.jpg'
@@ -245,6 +247,20 @@ const _apps: MinAppType[] = [
     name: 'Genspark',
     logo: GensparkLogo,
     url: 'https://www.genspark.ai/'
+  },
+  {
+    id: 'grok',
+    name: 'Grok',
+    logo: GrokAppLogo,
+    url: 'https://x.com/i/grok',
+    bodered: true
+  },
+  {
+    id: 'telegram-web',
+    name: 'Telegram Web',
+    url: 'https://web.telegram.org/',
+    logo: TelegramWebLogo,
+    bodered: true
   }
 ]
 
@@ -253,6 +269,6 @@ export function getAllMinApps() {
 }
 
 export function startMinAppById(id: string) {
-  const app = getAllMinApps().find((app) => app?.id === id)
-  app && MinApp.start(app)
+  const app = _apps.find((app) => app.id === id)
+  app && MinApp.start()
 }

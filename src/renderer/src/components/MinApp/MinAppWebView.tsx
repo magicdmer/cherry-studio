@@ -303,9 +303,9 @@ const MinAppWebView: FC<Props> = ({ tab }) => {
             height: '100%',
             display: 'flex'
           },
-          allowpopups: true,
+          allowpopups: 'true',
           partition: 'persist:shared',
-          webpreferences: 'nodeIntegration=no, contextIsolation=yes, javascript=yes, backgroundThrottling=false'
+          webpreferences: 'nodeIntegration=no, contextIsolation=yes, javascript=yes, backgroundThrottling=false, webSecurity=yes, allowRunningInsecureContent=no, plugins=yes'
         } as any)}
       />
     </Container>

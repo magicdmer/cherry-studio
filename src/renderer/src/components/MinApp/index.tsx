@@ -12,9 +12,14 @@ export default class MinApp {
   static topviewId = 'MinApp'
   static browserComponent = (<CachedMinAppBrowser />)
   static onClose = () => {}
+  static retryCount = 0
+  static maxRetries = 3
+  static retryDelay = 1000 // 1秒后重试
 
   static close() {
     try {
+      // 重置重试计数
+      this.retryCount = 0
       // 确保在关闭前清理资源
       store.dispatch(setMinappBrowserVisible(false))
       TopView.hide(this.topviewId)
@@ -38,9 +43,26 @@ export default class MinApp {
       store.dispatch(setMinappBrowserVisible(true))
 
       // 使用缓存的组件实例
-      return new Promise<any>((resolve) => {
-        TopView.show(this.browserComponent, this.topviewId)
-        resolve({})
+      return new Promise<any>((resolve, reject) => {
+        try {
+          TopView.show(this.browserComponent, this.topviewId)
+          resolve({})
+        } catch (error) {
+          // 如果显示失败，尝试重试
+          if (this.retryCount < this.maxRetries) {
+            this.retryCount++
+            console.warn(`Retrying MinApp start (attempt ${this.retryCount}/${this.maxRetries})...`)
+            setTimeout(() => {
+              this.start()
+                .then(resolve)
+                .catch(reject)
+            }, this.retryDelay)
+          } else {
+            console.error('Max retry attempts reached for MinApp start')
+            this.close() // 确保清理资源
+            reject(error)
+          }
+        }
       })
     } catch (error) {
       console.error('Error starting MinApp:', error)

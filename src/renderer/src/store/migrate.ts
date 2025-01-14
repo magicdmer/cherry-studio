@@ -790,6 +790,15 @@ const migrateConfig = {
       disabled: []
     }
     return state
+  },
+  '55': (state: RootState) => {
+    if (!state.settings.sidebarIcons) {
+      state.settings.sidebarIcons = {
+        visible: DEFAULT_SIDEBAR_ICONS,
+        disabled: []
+      }
+    }
+    return state
   }
 }
 

@@ -1,6 +1,6 @@
 import { DownloadOutlined, ExpandOutlined } from '@ant-design/icons'
 import MinApp from '@renderer/components/MinApp'
-import { extractTitle } from '@renderer/utils/formula'
+import { extractTitle } from '@renderer/utils/formats'
 import { Button } from 'antd'
 import { FC } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -99,11 +99,10 @@ const getModelCapabilities = (modelId?: string) => {
       supportSteps: false,
       supportGuidanceScale: false,
       supportNegativePrompt: false,
-      supportPromptEnhancement: true
+      supportPromptEnhancement: false
     }
   }
 
-  // 其他模型(如 FLUX, Stable Diffusion 等)支持所有功能
   return {
     supportSize: true,
     supportNumImages: true,

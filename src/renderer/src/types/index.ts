@@ -61,6 +61,10 @@ export type Message = {
   knowledgeBaseIds?: string[]
   type: 'text' | '@' | 'clear'
   isPreset?: boolean
+  metadata?: {
+    // Gemini
+    groundingMetadata?: any
+  }
 }
 
 export type Metrics = {

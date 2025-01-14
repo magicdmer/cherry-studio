@@ -1094,24 +1094,14 @@ export function isWebSearchModel(model: Model): boolean {
 
 export function getOpenAIWebSearchParams(model: Model): Record<string, any> {
   if (isWebSearchModel(model)) {
+    const webSearchTools = getWebSearchTools(model)
+
     if (model.provider === 'hunyuan') {
       return { enable_enhancement: true }
     }
 
-    if (model.provider === 'zhipu') {
-      const webSearchTools = getWebSearchTools(model)
-      return isEmpty(webSearchTools)
-        ? {}
-        : {
-            tools: webSearchTools
-          }
-    }
-
     return {
-      type: 'function',
-      function: {
-        name: 'googleSearch'
-      }
+      tools: webSearchTools
     }
   }
 

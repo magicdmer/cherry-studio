@@ -124,12 +124,12 @@ export default class OpenAIProvider extends BaseProvider {
     let model_name = model.id
 
     if (assistant.subType === 'plugin') {
-      model_name = model_name + "-" + assistant.pluginId  
+      model_name = model_name + '-' + assistant.pluginId
     }
 
     const systemMessage = assistant.prompt ? { role: 'system', content: assistant.prompt } : undefined
     const userMessages: ChatCompletionMessageParam[] = []
-    
+
     const _messages = filterContextMessages(takeRight(messages, contextCount + 1))
     onFilterMessages(_messages)
 
@@ -137,7 +137,7 @@ export default class OpenAIProvider extends BaseProvider {
       userMessages.push(await this.getMessageParam(message, model))
     }
 
-    const isOpenAIo1 = model.id.includes('o1-')
+    const isOpenAIo1 = model.id.startsWith('o1')
     const isPlugin = assistant.subType === 'plugin'
 
     const isSupportStreamOutput = () => {
@@ -354,13 +354,7 @@ export default class OpenAIProvider extends BaseProvider {
     }
   }
 
-  public async generateImage({
-    model,
-    prompt,
-    imageSize,
-    batchSize,
-    signal,
-  }: GenerateImageParams): Promise<string[]> {
+  public async generateImage({ model, prompt, imageSize, batchSize, signal }: GenerateImageParams): Promise<string[]> {
     const response = (await this.sdk.request({
       method: 'post',
       path: '/images/generations',

@@ -44,3 +44,9 @@ stats.html
 
 # Local
 local
+
+# Build output
+/dist
+/dist/**
+/dist/win-unpacked
+/dist/win-unpacked/**

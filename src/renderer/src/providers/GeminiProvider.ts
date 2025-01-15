@@ -141,6 +141,7 @@ export default class GeminiProvider extends BaseProvider {
       {
         model: model.id,
         systemInstruction: assistant.prompt,
+        // @ts-ignore googleSearch is not a valid tool for Gemini
         tools: assistant.enableWebSearch && isWebSearchModel(model) ? [{ googleSearch: {} }] : undefined,
         generationConfig: {
           maxOutputTokens: maxTokens,

@@ -252,7 +252,7 @@ const _apps: MinAppType[] = [
     id: 'grok',
     name: 'Grok',
     logo: GrokAppLogo,
-    url: 'https://x.com/i/grok',
+    url: 'https://grok.com',
     bodered: true
   },
   {

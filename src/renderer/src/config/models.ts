@@ -134,6 +134,7 @@ const visionAllowedModels = [
   'minicpm',
   'gemini-1\\.5',
   'gemini-exp',
+  'gemini-2\\.0',
   'claude-3',
   'vision',
   'glm-4v',

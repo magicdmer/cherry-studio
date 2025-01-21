@@ -292,6 +292,7 @@ const Tabs = styled(TabsAntd)<{ $language: string }>`
     justify-content: ${({ $language }) => ($language.startsWith('zh') ? 'center' : 'flex-start')};
     user-select: none;
     transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    outline: none !important;
 
     .ant-tabs-tab-btn {
       white-space: nowrap;
@@ -299,6 +300,7 @@ const Tabs = styled(TabsAntd)<{ $language: string }>`
       text-overflow: ellipsis;
       max-width: 100px;
       transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+      outline: none !important;
     }
     &:hover {
       color: var(--color-text) !important;

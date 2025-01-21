@@ -113,7 +113,7 @@ export default class GeminiProvider extends BaseProvider {
   }
 
   private getModelSafetySetting(modelId: string): HarmBlockThreshold {
-    return modelId.includes('gemini-exp-') ? HarmBlockThreshold.BLOCK_NONE : "OFF" as HarmBlockThreshold
+    return modelId.includes('gemini-exp-') || modelId.includes('thinking-exp') ? HarmBlockThreshold.BLOCK_NONE : "OFF" as HarmBlockThreshold
   }
 
   public async completions({ messages, assistant, onChunk, onFilterMessages }: CompletionsParams) {

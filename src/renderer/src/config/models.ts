@@ -10,6 +10,7 @@ import AisingaporeModelLogo from '@renderer/assets/images/models/aisingapore.png
 import AisingaporeModelLogoDark from '@renderer/assets/images/models/aisingapore_dark.png'
 import BaichuanModelLogo from '@renderer/assets/images/models/baichuan.png'
 import BaichuanModelLogoDark from '@renderer/assets/images/models/baichuan_dark.png'
+import BgeModelLogo from '@renderer/assets/images/models/bge.webp'
 import BigcodeModelLogo from '@renderer/assets/images/models/bigcode.webp'
 import BigcodeModelLogoDark from '@renderer/assets/images/models/bigcode_dark.webp'
 import ChatGLMModelLogo from '@renderer/assets/images/models/chatglm.png'
@@ -123,7 +124,6 @@ import YiModelLogo from '@renderer/assets/images/models/yi.png'
 import YiModelLogoDark from '@renderer/assets/images/models/yi_dark.png'
 import { getProviderByModel } from '@renderer/services/AssistantService'
 import { Model } from '@renderer/types'
-import { isEmpty } from 'lodash'
 import OpenAI from 'openai'
 
 import { getWebSearchTools } from './tools'
@@ -134,7 +134,6 @@ const visionAllowedModels = [
   'minicpm',
   'gemini-1\\.5',
   'gemini-exp',
-  'gemini-2\\.0',
   'claude-3',
   'vision',
   'glm-4v',
@@ -170,12 +169,15 @@ export function getModelLogo(modelId: string) {
     pixtral: isLight ? PixtralModelLogo : PixtralModelLogoDark,
     jina: isLight ? JinaModelLogo : JinaModelLogoDark,
     abab: isLight ? MinimaxModelLogo : MinimaxModelLogoDark,
+    o3: isLight ? ChatGPTo1ModelLogo : ChatGPTo1ModelLogoDark,
     o1: isLight ? ChatGPTo1ModelLogo : ChatGPTo1ModelLogoDark,
     'gpt-3': isLight ? ChatGPT35ModelLogo : ChatGPT35ModelLogoDark,
     'gpt-4': isLight ? ChatGPT4ModelLogo : ChatGPT4ModelLogoDark,
     gpts: isLight ? ChatGPT4ModelLogo : ChatGPT4ModelLogoDark,
     'text-moderation': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
     'babbage-': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
+    'sora-': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
+    'omni-': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
     'text-embedding': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
     'davinci-': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
     glm: isLight ? ChatGLMModelLogo : ChatGLMModelLogoDark,
@@ -191,7 +193,6 @@ export function getModelLogo(modelId: string) {
     baichuan: isLight ? BaichuanModelLogo : BaichuanModelLogoDark,
     claude: isLight ? ClaudeModelLogo : ClaudeModelLogoDark,
     gemini: isLight ? GeminiModelLogo : GeminiModelLogoDark,
-    embedding: isLight ? EmbeddingModelLogo : EmbeddingModelLogoDark,
     bison: isLight ? PalmModelLogo : PalmModelLogoDark,
     palm: isLight ? PalmModelLogo : PalmModelLogoDark,
     step: isLight ? StepModelLogo : StepModelLogoDark,
@@ -220,6 +221,7 @@ export function getModelLogo(modelId: string) {
     magic: isLight ? MagicModelLogo : MagicModelLogoDark,
     midjourney: isLight ? MidjourneyModelLogo : MidjourneyModelLogoDark,
     'mj-': isLight ? MidjourneyModelLogo : MidjourneyModelLogoDark,
+    'tao-': isLight ? WenxinModelLogo : WenxinModelLogoDark,
     'ernie-': isLight ? WenxinModelLogo : WenxinModelLogoDark,
     voice: isLight ? FlashaudioModelLogo : FlashaudioModelLogoDark,
     'tts-1': isLight ? ChatGptModelLogo : ChatGptModelLogoDakr,
@@ -253,7 +255,9 @@ export function getModelLogo(modelId: string) {
     rakutenai: isLight ? RakutenaiModelLogo : RakutenaiModelLogoDark,
     ibm: isLight ? IbmModelLogo : IbmModelLogoDark,
     'google/': isLight ? GoogleModelLogo : GoogleModelLogoDark,
-    hugging: isLight ? HuggingfaceModelLogo : HuggingfaceModelLogoDark
+    hugging: isLight ? HuggingfaceModelLogo : HuggingfaceModelLogoDark,
+    embedding: isLight ? EmbeddingModelLogo : EmbeddingModelLogoDark,
+    'bge-': BgeModelLogo
   }
 
   for (const key in logoMap) {

@@ -1024,6 +1024,12 @@ export const TEXT_TO_IMAGES_MODELS = [
     group: 'Stable Diffusion'
   },
   {
+    id: 'deepseek-ai/Janus-Pro-7B',
+    provider: 'silicon',
+    name: 'Janus-Pro-7B',
+    group: 'deepseek-ai'
+  },
+  {
     id: 'dall-e-3',
     provider: 'openai',
     name: 'dall-e-3',

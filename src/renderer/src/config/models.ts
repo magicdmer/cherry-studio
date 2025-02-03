@@ -127,6 +127,7 @@ import { Model } from '@renderer/types'
 import OpenAI from 'openai'
 
 import { getWebSearchTools } from './tools'
+import { isEmpty } from 'lodash'
 
 const visionAllowedModels = [
   'llava',

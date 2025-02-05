@@ -40,6 +40,7 @@ export type AssistantSettings = {
   defaultModel?: Model
   autoResetModel: boolean
   customParameters?: AssistantSettingCustomParameters[]
+  reasoning_effort?: 'low' | 'medium' | 'high'
 }
 
 export type Agent = Omit<Assistant, 'model'>
@@ -105,7 +106,7 @@ export type Provider = {
 
 export type ProviderType = 'openai' | 'anthropic' | 'gemini'
 
-export type ModelType = 'text' | 'vision' | 'embedding'
+export type ModelType = 'text' | 'vision' | 'embedding' | 'reasoning'
 
 export type Model = {
   id: string

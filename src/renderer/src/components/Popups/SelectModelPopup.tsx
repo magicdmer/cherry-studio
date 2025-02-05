@@ -1,7 +1,6 @@
 import { PushpinOutlined, SearchOutlined } from '@ant-design/icons'
-import VisionIcon from '@renderer/components/Icons/VisionIcon'
 import { TopView } from '@renderer/components/TopView'
-import { getModelLogo, isEmbeddingModel, isVisionModel } from '@renderer/config/models'
+import { getModelLogo, isEmbeddingModel } from '@renderer/config/models'
 import db from '@renderer/databases'
 import { useProviders } from '@renderer/hooks/useProvider'
 import { getModelUniqId } from '@renderer/services/ModelService'

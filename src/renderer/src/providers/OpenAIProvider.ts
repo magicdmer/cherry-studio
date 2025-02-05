@@ -171,7 +171,7 @@ export default class OpenAIProvider extends BaseProvider {
     const isPlugin = assistant.subType === 'plugin'
 
     const isSupportStreamOutput = () => {
-      if (this.provider.id === 'github' && isOpenAIo1) {
+      if (isOpenAIo1) {
         return false
       }
       return streamOutput

@@ -165,7 +165,14 @@ export default class OpenAIProvider extends BaseProvider {
       model_name = model_name + '-' + assistant.pluginId
     }
 
-    const systemMessage = assistant.prompt ? { role: 'system', content: assistant.prompt } : undefined
+    let systemMessage = assistant.prompt ? { role: 'system', content: assistant.prompt } : undefined
+    if (['o1', 'o1-2024-12-17'].includes(model.id) || model.id.startsWith('o3')) {
+      systemMessage = {
+        role: 'developer',
+        content: `Formatting re-enabled${systemMessage ? "\n" + systemMessage.content : ""}`
+      };
+    }
+    
     const userMessages: ChatCompletionMessageParam[] = []
 
     const _messages = filterContextMessages(takeRight(messages, contextCount + 1))

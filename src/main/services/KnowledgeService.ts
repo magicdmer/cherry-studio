@@ -128,7 +128,21 @@ class KnowledgeService {
 
       const fileContent = fs.readFileSync(file.path, 'utf-8')
 
-      return await ragApplication.addLoader(new TextLoader({ text: fileContent }), forceReload)
+      if (['.html'].includes(file.ext)) {
+        return await ragApplication.addLoader(
+          new WebLoader({
+            urlOrContent: fileContent,
+            chunkSize: base.chunkSize,
+            chunkOverlap: base.chunkOverlap
+          }) as any,
+          forceReload
+        )
+      }
+
+      return await ragApplication.addLoader(
+        new TextLoader({ text: fileContent, chunkSize: base.chunkSize, chunkOverlap: base.chunkOverlap }),
+        forceReload
+      )
     }
 
     return { entriesAdded: 0, uniqueId: '', loaderType: '' }

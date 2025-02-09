@@ -35,7 +35,10 @@ const Markdown: FC<Props> = ({ message }) => {
     const empty = isEmpty(message.content)
     const paused = message.status === 'paused'
     const content = empty && paused ? t('message.chat.completion.paused') : withGeminiGrounding(message)
-    return removeSvgEmptyLines(escapeBrackets(content))
+    const protectedContent = message.role === 'assistant' 
+      ? content.replace(/(?<!\\)(?<!~)~([^~]+)~(?!~)/g, '\\~$1\\~')
+      : content
+    return removeSvgEmptyLines(escapeBrackets(protectedContent))
   }, [message, t])
 
   const rehypePlugins = useMemo(() => {
@@ -51,12 +54,13 @@ const Markdown: FC<Props> = ({ message }) => {
     <ReactMarkdown
       className="markdown"
       rehypePlugins={rehypePlugins}
-      remarkPlugins={[remarkMath, remarkGfm]}
+      remarkPlugins={[[remarkGfm, { gfmStrikethrough: true }], remarkMath]}
       components={
         {
           a: Link,
           code: CodeBlock,
-          img: ImagePreview
+          img: ImagePreview,
+          del: ({ node, ...props }) => <del {...props} />
         } as Partial<Components>
       }
       remarkRehypeOptions={{

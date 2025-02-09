@@ -296,59 +296,101 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
           </Space.Compact>
         </>
       )}
-      {provider.id === 'ollama' && <OllamSettings />}
-      {provider.id === 'graphrag-kylin-mountain' && provider.models.length > 0 && (
-        <GraphRAGSettings provider={provider} />
-      )}
-      <SettingSubtitle style={{ marginBottom: 5 }}>{t('common.models')}</SettingSubtitle>
-      {Object.keys(modelGroups).map((group) => (
-        <Card
-          key={group}
-          type="inner"
-          title={group}
-          style={{ marginBottom: '10px', border: '0.5px solid var(--color-border)' }}
-          size="small">
-          {modelGroups[group].map((model) => (
-            <ModelListItem key={model.id}>
-              <ModelListHeader>
-                <Avatar src={getModelLogo(model.id)} size={22} style={{ marginRight: '8px' }}>
-                  {model.name[0].toUpperCase()}
-                </Avatar>
-                <ModelNameRow>
-                  <span>{model?.name}</span>
-                  <ModelTags model={model} />
-                </ModelNameRow>
-                <Popover content={modelTypeContent(model)} title={t('models.type.select')} trigger="click">
-                  <SettingIcon />
-                </Popover>
-              </ModelListHeader>
-              <RemoveIcon onClick={() => removeModel(model)} />
-            </ModelListItem>
+      {provider.id === 'ollama' || provider.type === 'ollama' ? (
+        <>
+          <OllamSettings provider={provider} />
+          <SettingSubtitle style={{ marginBottom: 5 }}>{t('common.models')}</SettingSubtitle>
+          {Object.keys(modelGroups).map((group) => (
+            <Card
+              key={group}
+              type="inner"
+              title={group}
+              style={{ marginBottom: '10px', border: '0.5px solid var(--color-border)' }}
+              size="small">
+              {modelGroups[group].map((model) => (
+                <ModelListItem key={model.id}>
+                  <ModelListHeader>
+                    <Avatar src={getModelLogo(model.id)} size={22} style={{ marginRight: '8px' }}>
+                      {model.name[0].toUpperCase()}
+                    </Avatar>
+                    <ModelNameRow>
+                      <span>{model?.name}</span>
+                      <ModelTags model={model} />
+                    </ModelNameRow>
+                    <Popover content={modelTypeContent(model)} title={t('models.type.select')} trigger="click">
+                      <SettingIcon />
+                    </Popover>
+                  </ModelListHeader>
+                  <RemoveIcon onClick={() => removeModel(model)} />
+                </ModelListItem>
+              ))}
+            </Card>
           ))}
-        </Card>
-      ))}
-      {docsWebsite && (
-        <SettingHelpTextRow>
-          <SettingHelpText>{t('settings.provider.docs_check')} </SettingHelpText>
-          <SettingHelpLink target="_blank" href={docsWebsite}>
-            {t(`provider.${provider.id}`) + ' '}
-            {t('common.docs')}
-          </SettingHelpLink>
-          <SettingHelpText>{t('common.and')}</SettingHelpText>
-          <SettingHelpLink target="_blank" href={modelsWebsite}>
-            {t('common.models')}
-          </SettingHelpLink>
-          <SettingHelpText>{t('settings.provider.docs_more_details')}</SettingHelpText>
-        </SettingHelpTextRow>
+          <Flex gap={10} style={{ marginTop: '10px' }}>
+            <Button type="primary" onClick={onManageModel} icon={<EditOutlined />}>
+              {t('button.manage')}
+            </Button>
+            <Button type="default" onClick={onAddModel} icon={<PlusOutlined />}>
+              {t('button.add')}
+            </Button>
+          </Flex>
+        </>
+      ) : (
+        <>
+          {provider.id === 'graphrag-kylin-mountain' && provider.models.length > 0 && (
+            <GraphRAGSettings provider={provider} />
+          )}
+          <SettingSubtitle style={{ marginBottom: 5 }}>{t('common.models')}</SettingSubtitle>
+          {Object.keys(modelGroups).map((group) => (
+            <Card
+              key={group}
+              type="inner"
+              title={group}
+              style={{ marginBottom: '10px', border: '0.5px solid var(--color-border)' }}
+              size="small">
+              {modelGroups[group].map((model) => (
+                <ModelListItem key={model.id}>
+                  <ModelListHeader>
+                    <Avatar src={getModelLogo(model.id)} size={22} style={{ marginRight: '8px' }}>
+                      {model.name[0].toUpperCase()}
+                    </Avatar>
+                    <ModelNameRow>
+                      <span>{model?.name}</span>
+                      <ModelTags model={model} />
+                    </ModelNameRow>
+                    <Popover content={modelTypeContent(model)} title={t('models.type.select')} trigger="click">
+                      <SettingIcon />
+                    </Popover>
+                  </ModelListHeader>
+                  <RemoveIcon onClick={() => removeModel(model)} />
+                </ModelListItem>
+              ))}
+            </Card>
+          ))}
+          {docsWebsite && (
+            <SettingHelpTextRow>
+              <SettingHelpText>{t('settings.provider.docs_check')} </SettingHelpText>
+              <SettingHelpLink target="_blank" href={docsWebsite}>
+                {t(`provider.${provider.id}`) + ' '}
+                {t('common.docs')}
+              </SettingHelpLink>
+              <SettingHelpText>{t('common.and')}</SettingHelpText>
+              <SettingHelpLink target="_blank" href={modelsWebsite}>
+                {t('common.models')}
+              </SettingHelpLink>
+              <SettingHelpText>{t('settings.provider.docs_more_details')}</SettingHelpText>
+            </SettingHelpTextRow>
+          )}
+          <Flex gap={10} style={{ marginTop: '10px' }}>
+            <Button type="primary" onClick={onManageModel} icon={<EditOutlined />}>
+              {t('button.manage')}
+            </Button>
+            <Button type="default" onClick={onAddModel} icon={<PlusOutlined />}>
+              {t('button.add')}
+            </Button>
+          </Flex>
+        </>
       )}
-      <Flex gap={10} style={{ marginTop: '10px' }}>
-        <Button type="primary" onClick={onManageModel} icon={<EditOutlined />}>
-          {t('button.manage')}
-        </Button>
-        <Button type="default" onClick={onAddModel} icon={<PlusOutlined />}>
-          {t('button.add')}
-        </Button>
-      </Flex>
     </SettingContainer>
   )
 }

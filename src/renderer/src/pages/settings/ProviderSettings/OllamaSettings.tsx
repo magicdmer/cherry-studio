@@ -1,15 +1,23 @@
 import { useOllamaSettings } from '@renderer/hooks/useOllama'
 import { InputNumber } from 'antd'
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
-
+import { Provider } from '@renderer/types'
 import { SettingHelpText, SettingHelpTextRow, SettingSubtitle } from '..'
 
-const OllamSettings: FC = () => {
+interface Props {
+  provider: Provider
+}
+
+const OllamSettings: FC<Props> = ({ provider }) => {
   const { keepAliveTime, setKeepAliveTime } = useOllamaSettings()
   const [keepAliveMinutes, setKeepAliveMinutes] = useState(keepAliveTime)
   const { t } = useTranslation()
+
+  useEffect(() => {
+    setKeepAliveMinutes(keepAliveTime)
+  }, [provider.id, keepAliveTime])
 
   return (
     <Container>

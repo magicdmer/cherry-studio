@@ -40,9 +40,9 @@ const ProvidersList: FC = () => {
     const provider = {
       id: uuid(),
       name: prividerName.trim(),
-      type,
+      type: type,
       apiKey: '',
-      apiHost: '',
+      apiHost: type === 'ollama' ? 'http://localhost:11434/v1/' : '',
       models: [],
       enabled: true,
       isSystem: false

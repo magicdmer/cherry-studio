@@ -281,6 +281,7 @@
       "regenerate.confirm": "重新生成会覆盖当前消息",
       "copy.success": "复制成功",
       "error.get_embedding_dimensions": "获取嵌入维度失败"
+      "citations": "引用内容"
     },
     "minapp": {
       "title": "小程序"

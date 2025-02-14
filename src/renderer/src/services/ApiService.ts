@@ -94,7 +94,7 @@ export async function fetchChatCompletion({
     }
   } catch (error: any) {
     message.status = 'error'
-    message.content = formatErrorMessage(error)
+    message.errorMessage = formatErrorMessage(error)
   }
 
   timer && clearInterval(timer)

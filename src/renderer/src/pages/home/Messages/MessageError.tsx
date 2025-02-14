@@ -9,11 +9,11 @@ const MessageError: FC<{ message: Message }> = ({ message }) => {
   return (
     <>
       <Alert
-        description={t('error.chat.response')}
+        description={message.errorMessage || t('error.chat.response')}
         type="error"
         style={{ marginBottom: 15, padding: 10, fontSize: 12 }}
       />
-      <Markdown message={message} />
+      {message.content && <Markdown message={message} />}
     </>
   )
 }

@@ -20,6 +20,14 @@ import BaseProvider from './BaseProvider'
 export default class OpenAIProvider extends BaseProvider {
   private sdk: OpenAI
 
+  private formatErrorMessage(error: any): string {
+    try {
+      return JSON.stringify(error, null, 2)
+    } catch (e) {
+      return 'Error: ' + error?.message
+    }
+  }
+
   constructor(provider: Provider) {
     super(provider)
 
@@ -219,74 +227,82 @@ export default class OpenAIProvider extends BaseProvider {
     let time_first_content_millsec = 0
     const start_time_millsec = new Date().getTime()
 
-    // @ts-ignore key is not typed
-    const stream = await this.sdk.chat.completions.create({
-      model: model_name,
-      messages: [isOpenAIo1 || isPlugin ? undefined : systemMessage, ...userMessages].filter(
-        Boolean
-      ) as ChatCompletionMessageParam[],
-      temperature: this.getTemperature(assistant, model),
-      top_p: this.getTopP(assistant, model),
-      max_tokens: maxTokens,
-      keep_alive: this.keepAliveTime,
-      stream: isSupportStreamOutput(),
-      ...this.getReasoningEffort(assistant, model),
-      ...getOpenAIWebSearchParams(assistant, model),
-      ...this.getProviderSpecificParameters(assistant, model),
-      ...this.getCustomParameters(assistant)
-    })
-
-    if (!isSupportStreamOutput()) {
-      const time_completion_millsec = new Date().getTime() - start_time_millsec
-      return onChunk({
-        text: stream.choices[0].message?.content || '',
-        usage: stream.usage,
-        metrics: {
-          completion_tokens: stream.usage?.completion_tokens,
-          time_completion_millsec,
-          time_first_token_millsec: 0
-        }
+    try {
+      // @ts-ignore key is not typed
+      const stream = await this.sdk.chat.completions.create({
+        model: model_name,
+        messages: [isOpenAIo1 || isPlugin ? undefined : systemMessage, ...userMessages].filter(
+          Boolean
+        ) as ChatCompletionMessageParam[],
+        temperature: this.getTemperature(assistant, model),
+        top_p: this.getTopP(assistant, model),
+        max_tokens: maxTokens,
+        keep_alive: this.keepAliveTime,
+        stream: isSupportStreamOutput(),
+        ...this.getReasoningEffort(assistant, model),
+        ...getOpenAIWebSearchParams(assistant, model),
+        ...this.getProviderSpecificParameters(assistant, model),
+        ...this.getCustomParameters(assistant)
       })
-    }
 
-    for await (const chunk of stream) {
-      if (window.keyv.get(EVENT_NAMES.CHAT_COMPLETION_PAUSED)) {
-        break
+      if (!isSupportStreamOutput()) {
+        const time_completion_millsec = new Date().getTime() - start_time_millsec
+        return onChunk({
+          text: stream.choices[0].message?.content || '',
+          usage: stream.usage,
+          metrics: {
+            completion_tokens: stream.usage?.completion_tokens,
+            time_completion_millsec,
+            time_first_token_millsec: 0
+          }
+        })
       }
 
-      const delta = chunk.choices[0]?.delta
+      for await (const chunk of stream) {
+        if (window.keyv.get(EVENT_NAMES.CHAT_COMPLETION_PAUSED)) {
+          break
+        }
 
-      // @ts-expect-error `reasoning_content` not supported by OpenAI for now
-      if (delta?.reasoning_content) {
-        hasReasoningContent = true
+        const delta = chunk.choices[0]?.delta
+
+        // @ts-expect-error `reasoning_content` not supported by OpenAI for now
+        if (delta?.reasoning_content) {
+          hasReasoningContent = true
+        }
+
+        if (time_first_token_millsec == 0) {
+          time_first_token_millsec = new Date().getTime() - start_time_millsec
+        }
+
+        if (time_first_content_millsec == 0 && isReasoningJustDone(delta)) {
+          time_first_content_millsec = new Date().getTime()
+        }
+
+        const time_completion_millsec = new Date().getTime() - start_time_millsec
+        const time_thinking_millsec = time_first_content_millsec ? time_first_content_millsec - start_time_millsec : 0
+
+        // Extract citations from the raw response if available
+        const citations = (chunk as OpenAI.Chat.Completions.ChatCompletionChunk & { citations?: string[] })?.citations
+
+        onChunk({
+          text: delta?.content || '',
+          // @ts-ignore key is not typed
+          reasoning_content: delta?.reasoning_content || delta?.reasoning || '',
+          usage: chunk.usage,
+          metrics: {
+            completion_tokens: chunk.usage?.completion_tokens,
+            time_completion_millsec,
+            time_first_token_millsec,
+            time_thinking_millsec
+          },
+          citations
+        })
       }
-
-      if (time_first_token_millsec == 0) {
-        time_first_token_millsec = new Date().getTime() - start_time_millsec
-      }
-
-      if (time_first_content_millsec == 0 && isReasoningJustDone(delta)) {
-        time_first_content_millsec = new Date().getTime()
-      }
-
-      const time_completion_millsec = new Date().getTime() - start_time_millsec
-      const time_thinking_millsec = time_first_content_millsec ? time_first_content_millsec - start_time_millsec : 0
-
-      // Extract citations from the raw response if available
-      const citations = (chunk as OpenAI.Chat.Completions.ChatCompletionChunk & { citations?: string[] })?.citations
-
+    } catch (error: any) {
       onChunk({
-        text: delta?.content || '',
-        // @ts-ignore key is not typed
-        reasoning_content: delta?.reasoning_content || delta.reasoning || '',
-        usage: chunk.usage,
-        metrics: {
-          completion_tokens: chunk.usage?.completion_tokens,
-          time_completion_millsec,
-          time_first_token_millsec,
-          time_thinking_millsec
-        },
-        citations
+        text: '',
+        errorMessage: this.formatErrorMessage(error),
+        status: 'error'
       })
     }
   }

@@ -50,6 +50,7 @@ export type Message = {
   assistantId: string
   role: 'user' | 'assistant'
   content: string
+  errorMessage?: string
   reasoning_content?: string
   translatedContent?: string
   topicId: string

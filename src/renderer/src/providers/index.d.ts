@@ -3,6 +3,8 @@ import type { Assistant, Message, Metrics } from '@renderer/types'
 
 interface ChunkCallbackData {
   text?: string
+  errorMessage?: string
+  status?: 'error' | 'success' | 'pending'
   reasoning_content?: string
   usage?: OpenAI.Completions.CompletionUsage
   metrics?: Metrics

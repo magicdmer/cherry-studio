@@ -298,20 +298,6 @@ export default class OpenAIProvider extends BaseProvider {
       { role: 'user', content: message.content }
     ]
 
-    const isOpenAIo1 = this.isOpenAIo1(model)
-
-    const isSupportedStreamOutput = () => {
-      if (!onResponse) {
-        return false
-      }
-      if (isOpenAIo1) {
-        return false
-      }
-      return true
-    }
-
-    const stream = isSupportedStreamOutput()
-
     // @ts-ignore key is not typed
     const response = await this.sdk.chat.completions.create({
       model: model.id,

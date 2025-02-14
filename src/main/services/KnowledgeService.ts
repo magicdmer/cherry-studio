@@ -131,16 +131,14 @@ class KnowledgeService {
       if (['.html'].includes(file.ext)) {
         return await ragApplication.addLoader(
           new WebLoader({
-            urlOrContent: fileContent,
-            chunkSize: base.chunkSize,
-            chunkOverlap: base.chunkOverlap
+            urlOrContent: fileContent
           }) as any,
           forceReload
         )
       }
 
       return await ragApplication.addLoader(
-        new TextLoader({ text: fileContent, chunkSize: base.chunkSize, chunkOverlap: base.chunkOverlap }),
+        new TextLoader({ text: fileContent }),
         forceReload
       )
     }

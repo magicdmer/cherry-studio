@@ -5,9 +5,11 @@ export type Assistant = {
   id: string
   name: string
   prompt: string
+  pluginId?: string
   knowledge_bases?: KnowledgeBase[]
   topics: Topic[]
   type: string
+  subType?: string
   emoji?: string
   description?: string
   model?: Model

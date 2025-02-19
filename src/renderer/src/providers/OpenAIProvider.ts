@@ -172,6 +172,7 @@ export default class OpenAIProvider extends BaseProvider {
     const defaultModel = getDefaultModel()
     const model = assistant.model || defaultModel
     const { contextCount, maxTokens, streamOutput } = getAssistantSettings(assistant)
+    let model_name = model.id
 
     let systemMessage = assistant.prompt ? { role: 'system', content: assistant.prompt } : undefined
 
@@ -180,6 +181,11 @@ export default class OpenAIProvider extends BaseProvider {
         role: 'developer',
         content: `Formatting re-enabled${systemMessage ? '\n' + systemMessage.content : ''}`
       }
+    }
+
+    if (assistant.subType === 'plugin') {
+      model_name = model_name + "-" + assistant.pluginId 
+      systemMessage = undefined
     }
 
     const userMessages: ChatCompletionMessageParam[] = []
@@ -198,7 +204,7 @@ export default class OpenAIProvider extends BaseProvider {
     }
 
     const isOpenAIo1 = this.isOpenAIo1(model)
-
+ 
     const isSupportStreamOutput = () => {
       if (isOpenAIo1) {
         return false
@@ -216,7 +222,7 @@ export default class OpenAIProvider extends BaseProvider {
 
     // @ts-ignore key is not typed
     const stream = await this.sdk.chat.completions.create({
-      model: model.id,
+      model: model_name,
       messages: [systemMessage, ...userMessages].filter(Boolean) as ChatCompletionMessageParam[],
       temperature: this.getTemperature(assistant, model),
       top_p: this.getTopP(assistant, model),

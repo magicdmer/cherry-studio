@@ -1,4 +1,6 @@
+import type { TavilySearchResponse } from '@tavily/core'
 import OpenAI from 'openai'
+import React from 'react'
 import { BuiltinTheme } from 'shiki'
 
 export type Assistant = {
@@ -54,7 +56,7 @@ export type Message = {
   translatedContent?: string
   topicId: string
   createdAt: string
-  status: 'sending' | 'pending' | 'success' | 'paused' | 'error'
+  status: 'sending' | 'pending' | 'searching' | 'success' | 'paused' | 'error'
   modelId?: string
   model?: Model
   files?: FileType[]
@@ -65,15 +67,17 @@ export type Message = {
   type: 'text' | '@' | 'clear'
   isPreset?: boolean
   mentions?: Model[]
+  askId?: string
+  useful?: boolean
+  error?: Record<string, any>
   metadata?: {
     // Gemini
     groundingMetadata?: any
     // Perplexity
     citations?: string[]
+    // Web search
+    tavily?: TavilySearchResponse
   }
-  askId?: string
-  useful?: boolean
-  error?: Record<string, any>
 }
 
 export type Metrics = {
@@ -153,6 +157,7 @@ export type MinAppType = {
   url: string
   bodered?: boolean
   background?: string
+  style?: React.CSSProperties
 }
 
 export interface FileType {
@@ -273,4 +278,27 @@ export type GenerateImageParams = {
   promptEnhancement?: boolean
 }
 
+export interface TranslateHistory {
+  id: string
+  sourceText: string
+  targetText: string
+  sourceLanguage: string
+  targetLanguage: string
+  createdAt: string
+}
+
 export type SidebarIcon = 'assistants' | 'agents' | 'paintings' | 'translate' | 'minapp' | 'knowledge' | 'files'
+
+export type WebSearchProvider = {
+  id: string
+  name: string
+  apiKey: string
+}
+
+export type KnowledgeReference = {
+  id: number
+  content: string
+  sourceUrl: string
+  type: KnowledgeItemType
+  file?: FileType
+}

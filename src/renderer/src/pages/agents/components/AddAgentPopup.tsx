@@ -132,6 +132,7 @@ const PopupContainer: React.FC<Props> = ({ resolve }) => {
       maskClosable={false}
       afterClose={onClose}
       okText={t('agents.add.title')}
+      width={800}
       centered>
       <Form
         ref={formRef}

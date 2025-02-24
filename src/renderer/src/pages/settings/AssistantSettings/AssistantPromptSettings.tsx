@@ -26,7 +26,7 @@ const AssistantPromptSettings: React.FC<Props> = ({ assistant, updateAssistant, 
   const { t } = useTranslation()
 
   const onUpdate = () => {
-    const _assistant = { ...assistant, name, prompt, pluginId }
+    const _assistant = { ...assistant, name: `${emoji} ${name}`.trim(), prompt }
     updateAssistant(_assistant)
   }
 

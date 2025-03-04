@@ -34,6 +34,7 @@ export interface SettingsState {
   fontSize: number
   topicPosition: 'left' | 'right'
   showTopicTime: boolean
+  showAssistantIcon: boolean
   pasteLongTextAsFile: boolean
   pasteLongTextThreshold: number
   clickAssistantToShowTopic: boolean
@@ -41,6 +42,7 @@ export interface SettingsState {
   renderInputMessageAsMarkdown: boolean
   codeShowLineNumbers: boolean
   codeCollapsible: boolean
+  codeWrappable: boolean
   mathEngine: 'MathJax' | 'KaTeX'
   messageStyle: 'plain' | 'bubble'
   codeStyle: CodeStyleVarious
@@ -73,6 +75,9 @@ export interface SettingsState {
   thoughtAutoCollapse: boolean
   notionAutoSplit: boolean
   notionSplitSize: number
+  yuqueToken: string | null
+  yuqueUrl: string | null
+  yuqueRepoId: string | null
 }
 
 export type MultiModelMessageStyle = 'horizontal' | 'vertical' | 'fold' | 'grid'
@@ -95,6 +100,7 @@ const initialState: SettingsState = {
   fontSize: 14,
   topicPosition: 'left',
   showTopicTime: false,
+  showAssistantIcon: false,
   pasteLongTextAsFile: false,
   pasteLongTextThreshold: 1500,
   clickAssistantToShowTopic: false,
@@ -102,6 +108,7 @@ const initialState: SettingsState = {
   renderInputMessageAsMarkdown: false,
   codeShowLineNumbers: false,
   codeCollapsible: false,
+  codeWrappable: false,
   mathEngine: 'KaTeX',
   messageStyle: 'plain',
   codeStyle: 'auto',
@@ -131,7 +138,10 @@ const initialState: SettingsState = {
   notionPageNameKey: 'Name',
   thoughtAutoCollapse: true,
   notionAutoSplit: false,
-  notionSplitSize: 90
+  notionSplitSize: 90,
+  yuqueToken: '',
+  yuqueUrl: '',
+  yuqueRepoId: ''
 }
 
 const settingsSlice = createSlice({
@@ -189,13 +199,15 @@ const settingsSlice = createSlice({
     },
     setWindowStyle: (state, action: PayloadAction<'transparent' | 'opaque'>) => {
       state.windowStyle = action.payload
-      console.log(state.windowStyle)
     },
     setTopicPosition: (state, action: PayloadAction<'left' | 'right'>) => {
       state.topicPosition = action.payload
     },
     setShowTopicTime: (state, action: PayloadAction<boolean>) => {
       state.showTopicTime = action.payload
+    },
+    setShowAssistantIcon: (state, action: PayloadAction<boolean>) => {
+      state.showAssistantIcon = action.payload
     },
     setPasteLongTextAsFile: (state, action: PayloadAction<boolean>) => {
       state.pasteLongTextAsFile = action.payload
@@ -232,6 +244,9 @@ const settingsSlice = createSlice({
     },
     setCodeCollapsible: (state, action: PayloadAction<boolean>) => {
       state.codeCollapsible = action.payload
+    },
+    setCodeWrappable: (state, action: PayloadAction<boolean>) => {
+      state.codeWrappable = action.payload
     },
     setMathEngine: (state, action: PayloadAction<'MathJax' | 'KaTeX'>) => {
       state.mathEngine = action.payload
@@ -303,6 +318,15 @@ const settingsSlice = createSlice({
     },
     setNotionSplitSize: (state, action: PayloadAction<number>) => {
       state.notionSplitSize = action.payload
+    },
+    setYuqueToken: (state, action: PayloadAction<string>) => {
+      state.yuqueToken = action.payload
+    },
+    setYuqueRepoId: (state, action: PayloadAction<string>) => {
+      state.yuqueRepoId = action.payload
+    },
+    setYuqueUrl: (state, action: PayloadAction<string>) => {
+      state.yuqueUrl = action.payload
     }
   }
 })
@@ -327,6 +351,7 @@ export const {
   setWindowStyle,
   setTopicPosition,
   setShowTopicTime,
+  setShowAssistantIcon,
   setPasteLongTextAsFile,
   setRenderInputMessageAsMarkdown,
   setClickAssistantToShowTopic,
@@ -339,6 +364,7 @@ export const {
   setWebdavSyncInterval,
   setCodeShowLineNumbers,
   setCodeCollapsible,
+  setCodeWrappable,
   setMathEngine,
   setGridColumns,
   setGridPopoverTrigger,
@@ -360,7 +386,10 @@ export const {
   setNotionPageNameKey,
   setThoughtAutoCollapse,
   setNotionAutoSplit,
-  setNotionSplitSize
+  setNotionSplitSize,
+  setYuqueToken,
+  setYuqueRepoId,
+  setYuqueUrl
 } = settingsSlice.actions
 
 export default settingsSlice.reducer

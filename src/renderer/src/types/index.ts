@@ -230,6 +230,7 @@ export type KnowledgeItem = {
   uniqueIds?: string[]
   type: KnowledgeItemType
   content: string | FileType
+  remark?: string
   created_at: number
   updated_at: number
   processingStatus?: ProcessingStatus

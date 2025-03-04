@@ -26,13 +26,13 @@ const AssistantPromptSettings: React.FC<Props> = ({ assistant, updateAssistant, 
   const { t } = useTranslation()
 
   const onUpdate = () => {
-    const _assistant = { ...assistant, name: `${emoji} ${name}`.trim(), prompt }
+    const _assistant = { ...assistant, name: name.trim(), emoji, prompt }
     updateAssistant(_assistant)
   }
 
   const handleEmojiSelect = (selectedEmoji: string) => {
     setEmoji(selectedEmoji)
-    const _assistant = { ...assistant, name: `${selectedEmoji} ${name}`.trim(), prompt }
+    const _assistant = { ...assistant, name: name.trim(), emoji: selectedEmoji, prompt }
     updateAssistant(_assistant)
   }
 

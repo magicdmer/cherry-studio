@@ -786,7 +786,7 @@ const InputBarContainer = styled.div`
   margin-top: 12px;
   border-radius: 15px;
   padding-top: 6px; // 为拖动手柄留出空间
-  background-color: var(--color-background-opacity);
+  background-color: rgba(255, 255, 255, 0.04);
 `
 
 const TextareaStyle: CSSProperties = {

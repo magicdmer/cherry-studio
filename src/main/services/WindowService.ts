@@ -1,9 +1,10 @@
 import { is } from '@electron-toolkit/utils'
-import { isLinux, isWin } from '@main/constant'
+import { isDev, isLinux, isWin } from '@main/constant'
+import { getFilesDir } from '@main/utils/file'
 import { app, BrowserWindow, ipcMain, Menu, MenuItem, shell } from 'electron'
 import Logger from 'electron-log'
 import windowStateKeeper from 'electron-window-state'
-import path, { join } from 'path'
+import { join } from 'path'
 
 import icon from '../../../build/icon.png?asset'
 import { titleBarOverlayDark, titleBarOverlayLight } from '../config'
@@ -127,6 +128,13 @@ export class WindowService {
       this.contextMenu?.popup()
     })
 
+    // Dangerous API
+    if (isDev) {
+      mainWindow.webContents.on('will-attach-webview', (_, webPreferences) => {
+        webPreferences.preload = join(__dirname, '../preload/index.js')
+      })
+    }
+
     // Handle webview context menu
     mainWindow.webContents.on('did-attach-webview', (_, webContents) => {
       webContents.on('context-menu', () => {
@@ -137,6 +145,7 @@ export class WindowService {
 
   private setupWindowEvents(mainWindow: BrowserWindow) {
     mainWindow.once('ready-to-show', () => {
+      mainWindow.webContents.setZoomFactor(configManager.getZoomFactor())
       mainWindow.show()
     })
 
@@ -196,7 +205,7 @@ export class WindowService {
 
       if (url.includes('http://file/')) {
         const fileName = url.replace('http://file/', '')
-        const storageDir = path.join(app.getPath('userData'), 'Data', 'Files')
+        const storageDir = getFilesDir()
         const filePath = storageDir + '/' + fileName
         shell.openPath(filePath).catch((err) => Logger.error('Failed to open file:', err))
       } else {
@@ -284,7 +293,7 @@ export class WindowService {
 
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       if (this.mainWindow.isMinimized()) {
-        this.mainWindow.restore()
+        return this.mainWindow.restore()
       }
       this.mainWindow.show()
       this.mainWindow.focus()

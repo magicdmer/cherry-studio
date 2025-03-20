@@ -66,18 +66,26 @@ export interface SettingsState {
     disabled: SidebarIcon[]
   }
   narrowMode: boolean
+  // QuickAssistant
   enableQuickAssistant: boolean
   clickTrayToShowQuickAssistant: boolean
   multiModelMessageStyle: MultiModelMessageStyle
+  readClipboardAtStartup: boolean
   notionDatabaseID: string | null
   notionApiKey: string | null
   notionPageNameKey: string | null
+  markdownExportPath: string | null
+  forceDollarMathInMarkdown: boolean
   thoughtAutoCollapse: boolean
   notionAutoSplit: boolean
   notionSplitSize: number
   yuqueToken: string | null
   yuqueUrl: string | null
   yuqueRepoId: string | null
+  obsidianApiKey: string | null
+  obsidianUrl: string | null
+  joplinToken: string | null
+  joplinUrl: string | null
 }
 
 export type MultiModelMessageStyle = 'horizontal' | 'vertical' | 'fold' | 'grid'
@@ -132,16 +140,23 @@ const initialState: SettingsState = {
   narrowMode: false,
   enableQuickAssistant: false,
   clickTrayToShowQuickAssistant: false,
+  readClipboardAtStartup: true,
   multiModelMessageStyle: 'fold',
   notionDatabaseID: '',
   notionApiKey: '',
   notionPageNameKey: 'Name',
+  markdownExportPath: null,
+  forceDollarMathInMarkdown: false,
   thoughtAutoCollapse: true,
   notionAutoSplit: false,
   notionSplitSize: 90,
   yuqueToken: '',
   yuqueUrl: '',
-  yuqueRepoId: ''
+  yuqueRepoId: '',
+  obsidianApiKey: '',
+  obsidianUrl: '',
+  joplinToken: '',
+  joplinUrl: ''
 }
 
 const settingsSlice = createSlice({
@@ -298,6 +313,9 @@ const settingsSlice = createSlice({
     setEnableQuickAssistant: (state, action: PayloadAction<boolean>) => {
       state.enableQuickAssistant = action.payload
     },
+    setReadClipboardAtStartup: (state, action: PayloadAction<boolean>) => {
+      state.readClipboardAtStartup = action.payload
+    },
     setMultiModelMessageStyle: (state, action: PayloadAction<'horizontal' | 'vertical' | 'fold' | 'grid'>) => {
       state.multiModelMessageStyle = action.payload
     },
@@ -309,6 +327,12 @@ const settingsSlice = createSlice({
     },
     setNotionPageNameKey: (state, action: PayloadAction<string>) => {
       state.notionPageNameKey = action.payload
+    },
+    setmarkdownExportPath: (state, action: PayloadAction<string | null>) => {
+      state.markdownExportPath = action.payload
+    },
+    setForceDollarMathInMarkdown: (state, action: PayloadAction<boolean>) => {
+      state.forceDollarMathInMarkdown = action.payload
     },
     setThoughtAutoCollapse: (state, action: PayloadAction<boolean>) => {
       state.thoughtAutoCollapse = action.payload
@@ -327,6 +351,18 @@ const settingsSlice = createSlice({
     },
     setYuqueUrl: (state, action: PayloadAction<string>) => {
       state.yuqueUrl = action.payload
+    },
+    setObsidianApiKey: (state, action: PayloadAction<string>) => {
+      state.obsidianApiKey = action.payload
+    },
+    setObsidianUrl: (state, action: PayloadAction<string>) => {
+      state.obsidianUrl = action.payload
+    },
+    setJoplinToken: (state, action: PayloadAction<string>) => {
+      state.joplinToken = action.payload
+    },
+    setJoplinUrl: (state, action: PayloadAction<string>) => {
+      state.joplinUrl = action.payload
     }
   }
 })
@@ -380,16 +416,23 @@ export const {
   setNarrowMode,
   setClickTrayToShowQuickAssistant,
   setEnableQuickAssistant,
+  setReadClipboardAtStartup,
   setMultiModelMessageStyle,
   setNotionDatabaseID,
   setNotionApiKey,
   setNotionPageNameKey,
+  setmarkdownExportPath,
+  setForceDollarMathInMarkdown,
   setThoughtAutoCollapse,
   setNotionAutoSplit,
   setNotionSplitSize,
   setYuqueToken,
   setYuqueRepoId,
-  setYuqueUrl
+  setYuqueUrl,
+  setObsidianApiKey,
+  setObsidianUrl,
+  setJoplinToken,
+  setJoplinUrl
 } = settingsSlice.actions
 
 export default settingsSlice.reducer

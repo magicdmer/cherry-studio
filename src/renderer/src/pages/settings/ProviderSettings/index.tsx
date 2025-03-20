@@ -119,7 +119,7 @@ const ProvidersList: FC = () => {
   })
 
   return (
-    <Container>
+    <Container className="selectable">
       <ProviderListContainer>
         <AddButtonWrapper>
           <Input
@@ -268,5 +268,4 @@ const AddButtonWrapper = styled.div`
   align-items: center;
   padding: 10px 8px;
 `
-
 export default ProvidersList

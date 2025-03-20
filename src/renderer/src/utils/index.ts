@@ -177,7 +177,18 @@ export function removeQuotes(str) {
 
 export function removeSpecialCharacters(str: string) {
   // First remove newlines and quotes, then remove other special characters
-  return str.replace(/[\n"]/g, '').replace(/[\p{M}\p{N}\p{P}\p{S}]/gu, '')
+  return str.replace(/[\n"]/g, '').replace(/[\p{M}\p{P}]/gu, '')
+}
+
+export function removeSpecialCharactersForTopicName(str: string) {
+  return str.replace(/[\r\n]+/g, ' ').trim()
+}
+
+export function removeSpecialCharactersForFileName(str: string) {
+  return str
+    .replace(/[<>:"/\\|?*.]/g, '_')
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
 }
 
 export function generateColorFromChar(char: string) {
@@ -235,8 +246,12 @@ export function loadScript(url: string) {
 }
 
 export function convertMathFormula(input) {
-  // 使用正则表达式匹配并替换公式格式
-  return input.replaceAll(/\\\[/g, '$$$$').replaceAll(/\\\]/g, '$$$$')
+  if (!input) return input
+
+  let result = input
+  result = result.replaceAll('\\[', '$$$$').replaceAll('\\]', '$$$$')
+  result = result.replaceAll('\\(', '$$').replaceAll('\\)', '$$')
+  return result
 }
 
 export function getBriefInfo(text: string, maxLength: number = 50): string {
@@ -273,7 +288,7 @@ export function getFileDirectory(filePath: string) {
 
 export function getFileExtension(filePath: string) {
   const parts = filePath.split('.')
-  const extension = parts.slice(-1)[0]
+  const extension = parts.slice(-1)[0].toLowerCase()
   return '.' + extension
 }
 
@@ -472,6 +487,14 @@ export function getTitleFromString(str: string, length: number = 80) {
   }
 
   return title
+}
+
+export function hasObjectKey(obj: any, key: string) {
+  if (typeof obj !== 'object' || obj === null) {
+    return false
+  }
+
+  return Object.keys(obj).includes(key)
 }
 
 export { classNames }

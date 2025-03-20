@@ -1,9 +1,8 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 import type { FileMetadataResponse, ListFilesResponse, UploadFileResponse } from '@google/generative-ai/server'
 import { ExtractChunkData } from '@llm-tools/embedjs-interfaces'
-import { FileType } from '@renderer/types'
-import { WebDavConfig } from '@renderer/types'
-import { AppInfo, KnowledgeBaseParams, KnowledgeItem, LanguageVarious } from '@renderer/types'
+import type { MCPServer, MCPTool } from '@renderer/types'
+import { AppInfo, FileType, KnowledgeBaseParams, KnowledgeItem, LanguageVarious, WebDavConfig } from '@renderer/types'
 import type { LoaderReturn } from '@shared/config/types'
 import type { OpenDialogOptions } from 'electron'
 import type { UpdateInfo } from 'electron-updater'
@@ -69,8 +68,8 @@ declare global {
         update: (shortcuts: Shortcut[]) => Promise<void>
       }
       knowledgeBase: {
-        create: ({ id, model, apiKey, baseURL }: KnowledgeBaseParams) => Promise<void>
-        reset: ({ base }: { base: KnowledgeBaseParams }) => Promise<void>
+        create: (base: KnowledgeBaseParams) => Promise<void>
+        reset: (base: KnowledgeBaseParams) => Promise<void>
         delete: (id: string) => Promise<void>
         add: ({
           base,
@@ -91,6 +90,15 @@ declare global {
           base: KnowledgeBaseParams
         }) => Promise<void>
         search: ({ search, base }: { search: string; base: KnowledgeBaseParams }) => Promise<ExtractChunkData[]>
+        rerank: ({
+          search,
+          base,
+          results
+        }: {
+          search: string
+          base: KnowledgeBaseParams
+          results: ExtractChunkData[]
+        }) => Promise<ExtractChunkData[]>
       }
       window: {
         setMinimumSize: (width: number, height: number) => Promise<void>
@@ -123,6 +131,33 @@ declare global {
       shell: {
         openExternal: (url: string, options?: OpenExternalOptions) => Promise<void>
       }
+      mcp: {
+        // servers
+        listServers: () => Promise<MCPServer[]>
+        addServer: (server: MCPServer) => Promise<void>
+        updateServer: (server: MCPServer) => Promise<void>
+        deleteServer: (serverName: string) => Promise<void>
+        setServerActive: (name: string, isActive: boolean) => Promise<void>
+        // tools
+        listTools: () => Promise<MCPTool[]>
+        callTool: ({ client, name, args }: { client: string; name: string; args: any }) => Promise<any>
+        // status
+        cleanup: () => Promise<void>
+      }
+      copilot: {
+        getAuthMessage: (
+          headers?: Record<string, string>
+        ) => Promise<{ device_code: string; user_code: string; verification_uri: string }>
+        getCopilotToken: (device_code: string, headers?: Record<string, string>) => Promise<{ access_token: string }>
+        saveCopilotToken: (access_token: string) => Promise<void>
+        getToken: (headers?: Record<string, string>) => Promise<{ token: string }>
+        logout: () => Promise<void>
+        getUser: (token: string) => Promise<{ login: string; avatar: string }>
+      }
+      isBinaryExist: (name: string) => Promise<boolean>
+      getBinaryPath: (name: string) => Promise<string>
+      installUVBinary: () => Promise<void>
+      installBunBinary: () => Promise<void>
     }
   }
 }

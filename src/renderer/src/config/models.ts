@@ -134,6 +134,7 @@ import OpenAI from 'openai'
 
 import { getWebSearchTools } from './tools'
 
+// Vision models
 const visionAllowedModels = [
   'llava',
   'moondream',
@@ -147,6 +148,7 @@ const visionAllowedModels = [
   'qwen-vl',
   'qwen2-vl',
   'qwen2.5-vl',
+  'qvq',
   'internvl2',
   'grok-vision-beta',
   'pixtral',
@@ -155,21 +157,66 @@ const visionAllowedModels = [
   'chatgpt-4o(?:-[\\w-]+)?',
   'o1(?:-[\\w-]+)?',
   'deepseek-vl(?:[\\w-]+)?',
-  'kimi-latest'
+  'kimi-latest',
+  'gemma-3(?:-[\\w-]+)'
 ]
 
 const visionExcludedModels = ['gpt-4-\\d+-preview', 'gpt-4-turbo-preview', 'gpt-4-32k', 'gpt-4-\\d+']
-
 export const VISION_REGEX = new RegExp(
   `\\b(?!(?:${visionExcludedModels.join('|')})\\b)(${visionAllowedModels.join('|')})\\b`,
   'i'
 )
 
+// Text to image models
 export const TEXT_TO_IMAGE_REGEX = /flux|diffusion|stabilityai|sd-|dall|cogview|janus/i
-export const REASONING_REGEX = /^(o\d+(?:-[\w-]+)?|.*\b(?:reasoner|thinking)\b.*|.*-[rR]\d+.*)$/i
 
+// Reasoning models
+export const REASONING_REGEX =
+  /^(o\d+(?:-[\w-]+)?|.*\b(?:reasoner|thinking)\b.*|.*-[rR]\d+.*|.*\bqwq(?:-[\w-]+)?\b.*)$/i
+
+// Embedding models
 export const EMBEDDING_REGEX = /(?:^text-|embed|bge-|e5-|LLM2Vec|retrieval|uae-|gte-|jina-clip|jina-embeddings)/i
-export const NOT_SUPPORTED_REGEX = /(?:^tts|rerank|whisper|speech)/i
+
+// Rerank models
+export const RERANKING_REGEX = /(?:rerank|re-rank|re-ranker|re-ranking|retrieval|retriever)/i
+
+export const NOT_SUPPORTED_REGEX = /(?:^tts|whisper|speech)/i
+
+// Tool calling models
+export const FUNCTION_CALLING_MODELS = [
+  'gpt-4o',
+  'gpt-4o-mini',
+  'gpt-4',
+  'gpt-4.5',
+  'claude',
+  'qwen',
+  'hunyuan',
+  'glm-4(?:-[\\w-]+)?',
+  'learnlm(?:-[\\w-]+)?',
+  'gemini(?:-[\\w-]+)?' // 提前排除了gemini的嵌入模型
+]
+
+const FUNCTION_CALLING_EXCLUDED_MODELS = ['aqa(?:-[\\w-]+)?', 'imagen(?:-[\\w-]+)?']
+
+export const FUNCTION_CALLING_REGEX = new RegExp(
+  `\\b(?!(?:${FUNCTION_CALLING_EXCLUDED_MODELS.join('|')})\\b)(?:${FUNCTION_CALLING_MODELS.join('|')})\\b`,
+  'i'
+)
+export function isFunctionCallingModel(model: Model): boolean {
+  if (model.type?.includes('function_calling')) {
+    return true
+  }
+
+  if (isEmbeddingModel(model)) {
+    return false
+  }
+
+  if (['deepseek', 'anthropic'].includes(model.provider)) {
+    return true
+  }
+
+  return FUNCTION_CALLING_REGEX.test(model.id)
+}
 
 export function getModelLogo(modelId: string) {
   const isLight = true
@@ -556,6 +603,7 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
       group: '01-ai'
     }
   ],
+  alayanew: [],
   openai: [
     { id: 'gpt-4-gizmo', provider: 'openai', name: ' gpt-4-gizmo', group: 'GPT 4' },
     { id: 'gpt-4.5-preview', provider: 'openai', name: ' gpt-4.5-preview', group: 'gpt-4.5' },
@@ -988,12 +1036,16 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
       group: 'OpenAI'
     }
   ],
+  copilot: [
+    {
+      id: 'gpt-4o-mini',
+      provider: 'copilot',
+      name: 'OpenAI GPT-4o-mini',
+      group: 'OpenAI'
+    }
+  ],
   yi: [
     { id: 'yi-lightning', name: 'Yi Lightning', provider: 'yi', group: 'yi-lightning', owned_by: '01.ai' },
-    // yi-medium, yi-large, yi-vision 已被 yi-lightning 替代 (详见 https://archive.ph/0Idg3)
-    // { id: 'yi-medium', name: 'yi-medium', provider: 'yi', group: 'yi-medium', owned_by: '01.ai' },
-    // { id: 'yi-large', name: 'yi-large', provider: 'yi', group: 'yi-large', owned_by: '01.ai' },
-    // { id: 'yi-vision', name: 'yi-vision', provider: 'yi', group: 'yi-vision', owned_by: '01.ai' }
     { id: 'yi-vision-v2', name: 'Yi Vision v2', provider: 'yi', group: 'yi-vision', owned_by: '01.ai' }
   ],
   zhipu: [
@@ -1743,7 +1795,8 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
       name: 'DeepSeek V3',
       group: 'DeepSeek'
     }
-  ]
+  ],
+  gpustack: []
 }
 
 export const TEXT_TO_IMAGES_MODELS = [
@@ -1846,8 +1899,18 @@ export function isEmbeddingModel(model: Model): boolean {
   return EMBEDDING_REGEX.test(model.id) || model.type?.includes('embedding') || false
 }
 
+export function isRerankModel(model: Model): boolean {
+  if (!model) {
+    return false
+  }
+  return RERANKING_REGEX.test(model.id) || false
+}
+
 export function isVisionModel(model: Model): boolean {
   if (!model) {
+    return false
+  }
+  if (model.provider === 'copilot') {
     return false
   }
 
@@ -1981,4 +2044,12 @@ export function getOpenAIWebSearchParams(assistant: Assistant, model: Model): Re
   }
 
   return {}
+}
+
+export function isGemmaModel(model?: Model): boolean {
+  if (!model) {
+    return false
+  }
+
+  return model.id.includes('gemma-') || model.group === 'Gemma'
 }

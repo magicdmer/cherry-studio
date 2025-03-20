@@ -1,30 +1,34 @@
 import fs from 'node:fs'
-import path from 'node:path'
 
-import { Shortcut, ThemeMode } from '@types'
-import { BrowserWindow, ipcMain, ProxyConfig, session, shell } from 'electron'
+import { getBinaryPath, isBinaryExists, runInstallScript } from '@main/utils/process'
+import { MCPServer, Shortcut, ThemeMode } from '@types'
+import { BrowserWindow, ipcMain, session, shell } from 'electron'
 import log from 'electron-log'
 
 import { titleBarOverlayDark, titleBarOverlayLight } from './config'
 import AppUpdater from './services/AppUpdater'
 import BackupManager from './services/BackupManager'
 import { configManager } from './services/ConfigManager'
+import CopilotService from './services/CopilotService'
 import { ExportService } from './services/ExportService'
 import FileService from './services/FileService'
 import FileStorage from './services/FileStorage'
 import { GeminiService } from './services/GeminiService'
 import KnowledgeService from './services/KnowledgeService'
+import MCPService from './services/MCPService'
+import { ProxyConfig, proxyManager } from './services/ProxyManager'
 import { registerShortcuts, unregisterAllShortcuts } from './services/ShortcutService'
 import { TrayService } from './services/TrayService'
 import { windowService } from './services/WindowService'
 import { getResourcePath } from './utils'
-import { decrypt } from './utils/aes'
-import { encrypt } from './utils/aes'
+import { decrypt, encrypt } from './utils/aes'
+import { getFilesDir } from './utils/file'
 import { compress, decompress } from './utils/zip'
 
 const fileManager = new FileStorage()
 const backupManager = new BackupManager()
 const exportService = new ExportService(fileManager)
+const mcpService = new MCPService()
 
 export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   const appUpdater = new AppUpdater(mainWindow)
@@ -33,16 +37,24 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
     version: app.getVersion(),
     isPackaged: app.isPackaged,
     appPath: app.getAppPath(),
-    filesPath: path.join(app.getPath('userData'), 'Data', 'Files'),
+    filesPath: getFilesDir(),
     appDataPath: app.getPath('userData'),
     resourcesPath: getResourcePath(),
     logsPath: log.transports.file.getFile().path
   }))
 
   ipcMain.handle('app:proxy', async (_, proxy: string) => {
-    const sessions = [session.defaultSession, session.fromPartition('persist:webview')]
-    const proxyConfig: ProxyConfig = proxy === 'system' ? { mode: 'system' } : proxy ? { proxyRules: proxy } : {}
-    await Promise.all(sessions.map((session) => session.setProxy(proxyConfig)))
+    let proxyConfig: ProxyConfig
+
+    if (proxy === 'system') {
+      proxyConfig = { mode: 'system' }
+    } else if (proxy) {
+      proxyConfig = { mode: 'custom', url: proxy }
+    } else {
+      proxyConfig = { mode: 'none' }
+    }
+
+    await proxyManager.configureProxy(proxyConfig)
   })
 
   ipcMain.handle('app:reload', () => mainWindow.reload())
@@ -178,6 +190,7 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   ipcMain.handle('knowledge-base:add', KnowledgeService.add)
   ipcMain.handle('knowledge-base:remove', KnowledgeService.remove)
   ipcMain.handle('knowledge-base:search', KnowledgeService.search)
+  ipcMain.handle('knowledge-base:rerank', KnowledgeService.rerank)
 
   // window
   ipcMain.handle('window:set-minimum-size', (_, width: number, height: number) => {
@@ -210,4 +223,43 @@ export function registerIpc(mainWindow: BrowserWindow, app: Electron.App) {
   ipcMain.handle('aes:decrypt', (_, encryptedData: string, iv: string, secretKey: string) =>
     decrypt(encryptedData, iv, secretKey)
   )
+
+  // Register MCP handlers
+  ipcMain.on('mcp:servers-from-renderer', (_, servers) => mcpService.setServers(servers))
+  ipcMain.handle('mcp:list-servers', async () => mcpService.listAvailableServices())
+  ipcMain.handle('mcp:add-server', async (_, server: MCPServer) => mcpService.addServer(server))
+  ipcMain.handle('mcp:update-server', async (_, server: MCPServer) => mcpService.updateServer(server))
+  ipcMain.handle('mcp:delete-server', async (_, serverName: string) => mcpService.deleteServer(serverName))
+  ipcMain.handle('mcp:set-server-active', async (_, { name, isActive }) =>
+    mcpService.setServerActive({ name, isActive })
+  )
+
+  // According to preload, this should take no parameters, but our implementation accepts
+  // an optional serverName for better flexibility
+  ipcMain.handle('mcp:list-tools', async (_, serverName?: string) => mcpService.listTools(serverName))
+  ipcMain.handle('mcp:call-tool', async (_, params: { client: string; name: string; args: any }) =>
+    mcpService.callTool(params)
+  )
+
+  ipcMain.handle('mcp:cleanup', async () => mcpService.cleanup())
+
+  ipcMain.handle('app:is-binary-exist', (_, name: string) => isBinaryExists(name))
+  ipcMain.handle('app:get-binary-path', (_, name: string) => getBinaryPath(name))
+  ipcMain.handle('app:install-uv-binary', () => runInstallScript('install-uv.js'))
+  ipcMain.handle('app:install-bun-binary', () => runInstallScript('install-bun.js'))
+
+  // Listen for changes in MCP servers and notify renderer
+  mcpService.on('servers-updated', (servers) => {
+    mainWindow?.webContents.send('mcp:servers-updated', servers)
+  })
+
+  app.on('before-quit', () => mcpService.cleanup())
+
+  //copilot
+  ipcMain.handle('copilot:get-auth-message', CopilotService.getAuthMessage)
+  ipcMain.handle('copilot:get-copilot-token', CopilotService.getCopilotToken)
+  ipcMain.handle('copilot:save-copilot-token', CopilotService.saveCopilotToken)
+  ipcMain.handle('copilot:get-token', CopilotService.getToken)
+  ipcMain.handle('copilot:logout', CopilotService.logout)
+  ipcMain.handle('copilot:get-user', CopilotService.getUser)
 }

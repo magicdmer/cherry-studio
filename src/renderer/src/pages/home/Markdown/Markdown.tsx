@@ -1,12 +1,13 @@
 import 'katex/dist/katex.min.css'
 import 'katex/dist/contrib/copy-tex'
+import 'katex/dist/contrib/mhchem'
 
 import MarkdownShadowDOMRenderer from '@renderer/components/MarkdownShadowDOMRenderer'
 import { useSettings } from '@renderer/hooks/useSettings'
 import type { Message } from '@renderer/types'
 import { escapeBrackets, removeSvgEmptyLines, withGeminiGrounding } from '@renderer/utils/formats'
 import { isEmpty } from 'lodash'
-import { type FC, useMemo } from 'react'
+import { type FC, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeKatex from 'rehype-katex'
@@ -15,8 +16,6 @@ import rehypeMathjax from 'rehype-mathjax'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-
-import 'katex/dist/contrib/mhchem'
 
 import CodeBlock from './CodeBlock'
 import ImagePreview from './ImagePreview'
@@ -27,13 +26,21 @@ const ALLOWED_ELEMENTS =
 
 interface Props {
   message: Message
+  citationsData?: Map<
+    string,
+    {
+      url: string
+      title?: string
+      content?: string
+    }
+  >
 }
 
-const Markdown: FC<Props> = ({ message }) => {
+const Markdown: FC<Props> = ({ message, citationsData }) => {
   const { t } = useTranslation()
   const { renderInputMessageAsMarkdown, mathEngine } = useSettings()
 
-  const rehypeMath = mathEngine === 'KaTeX' ? rehypeKatex : rehypeMathjax
+  const rehypeMath = useMemo(() => (mathEngine === 'KaTeX' ? rehypeKatex : rehypeMathjax), [mathEngine])
 
   const messageContent = useMemo(() => {
     const empty = isEmpty(message.content)
@@ -50,6 +57,25 @@ const Markdown: FC<Props> = ({ message }) => {
     return hasElements ? [rehypeRaw, rehypeMath] : [rehypeMath]
   }, [messageContent, rehypeMath])
 
+  const components = useCallback(() => {
+    const baseComponents = {
+      a: (props: any) => {
+        if (props.href && citationsData?.has(props.href)) {
+          return <Link {...props} citationData={citationsData.get(props.href)} />
+        }
+        return <Link {...props} />
+      },
+      code: CodeBlock,
+      img: ImagePreview
+    } as Partial<Components>
+
+    if (messageContent.includes('<style>')) {
+      baseComponents.style = MarkdownShadowDOMRenderer as any
+    }
+
+    return baseComponents
+  }, [messageContent, citationsData])
+
   if (message.role === 'user' && !renderInputMessageAsMarkdown) {
     return <p style={{ marginBottom: 5, whiteSpace: 'pre-wrap' }}>{messageContent}</p>
   }
@@ -59,15 +85,7 @@ const Markdown: FC<Props> = ({ message }) => {
       rehypePlugins={rehypePlugins}
       remarkPlugins={[[remarkGfm, { gfmStrikethrough: true }], remarkMath]}
       className="markdown"
-      components={
-        {
-          style: MarkdownShadowDOMRenderer,
-          a: Link,
-          code: CodeBlock,
-          img: ImagePreview,
-          del: ({ node, ...props }) => <del {...props} />
-        } as Partial<Components>
-      }
+      components={components()}
       remarkRehypeOptions={{
         footnoteLabel: t('common.footnotes'),
         footnoteLabelTagName: 'h4',

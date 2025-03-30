@@ -122,6 +122,7 @@ import UpstageModelLogo from '@renderer/assets/images/models/upstage.png'
 import UpstageModelLogoDark from '@renderer/assets/images/models/upstage_dark.png'
 import ViduModelLogo from '@renderer/assets/images/models/vidu.png'
 import ViduModelLogoDark from '@renderer/assets/images/models/vidu_dark.png'
+import VoyageModelLogo from '@renderer/assets/images/models/voyageai.png'
 import WenxinModelLogo from '@renderer/assets/images/models/wenxin.png'
 import WenxinModelLogoDark from '@renderer/assets/images/models/wenxin_dark.png'
 import XirangModelLogo from '@renderer/assets/images/models/xirang.png'
@@ -141,6 +142,7 @@ const visionAllowedModels = [
   'minicpm',
   'gemini-1\\.5',
   'gemini-2\\.0',
+  'gemini-2\\.5',
   'gemini-exp',
   'claude-3',
   'vision',
@@ -148,12 +150,14 @@ const visionAllowedModels = [
   'qwen-vl',
   'qwen2-vl',
   'qwen2.5-vl',
+  'qwen2.5-omni',
   'qvq',
   'internvl2',
   'grok-vision-beta',
   'pixtral',
   'gpt-4(?:-[\\w-]+)',
   'gpt-4o(?:-[\\w-]+)?',
+  'gpt-4.5(?:-[\\w-]+)',
   'chatgpt-4o(?:-[\\w-]+)?',
   'o1(?:-[\\w-]+)?',
   'deepseek-vl(?:[\\w-]+)?',
@@ -161,7 +165,7 @@ const visionAllowedModels = [
   'gemma-3(?:-[\\w-]+)'
 ]
 
-const visionExcludedModels = ['gpt-4-\\d+-preview', 'gpt-4-turbo-preview', 'gpt-4-32k', 'gpt-4-\\d+']
+const visionExcludedModels = ['gpt-4-\\d+-preview', 'gpt-4-turbo-preview', 'gpt-4-32k', 'gpt-4-\\d+', 'o1-mini', 'o1-preview', 'AIDC-AI/Marco-o1']
 export const VISION_REGEX = new RegExp(
   `\\b(?!(?:${visionExcludedModels.join('|')})\\b)(${visionAllowedModels.join('|')})\\b`,
   'i'
@@ -172,10 +176,11 @@ export const TEXT_TO_IMAGE_REGEX = /flux|diffusion|stabilityai|sd-|dall|cogview|
 
 // Reasoning models
 export const REASONING_REGEX =
-  /^(o\d+(?:-[\w-]+)?|.*\b(?:reasoner|thinking)\b.*|.*-[rR]\d+.*|.*\bqwq(?:-[\w-]+)?\b.*|.*\bhunyuan-t1(?:-[\w-]+)?\b.*)$/i
+  /^(o\d+(?:-[\w-]+)?|.*\b(?:reasoner|thinking)\b.*|.*-[rR]\d+.*|.*\bqwq(?:-[\w-]+)?\b.*|.*\bhunyuan-t1(?:-[\w-]+)?\b.*|.*\bglm-zero-preview\b.*)$/i
 
 // Embedding models
-export const EMBEDDING_REGEX = /(?:^text-|embed|bge-|e5-|LLM2Vec|retrieval|uae-|gte-|jina-clip|jina-embeddings)/i
+export const EMBEDDING_REGEX =
+  /(?:^text-|embed|bge-|e5-|LLM2Vec|retrieval|uae-|gte-|jina-clip|jina-embeddings|voyage-)/i
 
 // Rerank models
 export const RERANKING_REGEX = /(?:rerank|re-rank|re-ranker|re-ranking|retrieval|retriever)/i
@@ -188,15 +193,17 @@ export const FUNCTION_CALLING_MODELS = [
   'gpt-4o-mini',
   'gpt-4',
   'gpt-4.5',
+  'o1(?:-[\\w-]+)?',
   'claude',
   'qwen',
   'hunyuan',
+  'deepseek-ai/',
   'glm-4(?:-[\\w-]+)?',
   'learnlm(?:-[\\w-]+)?',
   'gemini(?:-[\\w-]+)?' // 提前排除了gemini的嵌入模型
 ]
 
-const FUNCTION_CALLING_EXCLUDED_MODELS = ['aqa(?:-[\\w-]+)?', 'imagen(?:-[\\w-]+)?']
+const FUNCTION_CALLING_EXCLUDED_MODELS = ['aqa(?:-[\\w-]+)?', 'imagen(?:-[\\w-]+)?', 'o1-mini', 'o1-preview', 'AIDC-AI/Marco-o1']
 
 export const FUNCTION_CALLING_REGEX = new RegExp(
   `\\b(?!(?:${FUNCTION_CALLING_EXCLUDED_MODELS.join('|')})\\b)(?:${FUNCTION_CALLING_MODELS.join('|')})\\b`,
@@ -327,7 +334,8 @@ export function getModelLogo(modelId: string) {
     embedding: isLight ? EmbeddingModelLogo : EmbeddingModelLogoDark,
     perplexity: isLight ? PerplexityModelLogo : PerplexityModelLogoDark,
     sonar: isLight ? PerplexityModelLogo : PerplexityModelLogoDark,
-    'bge-': BgeModelLogo
+    'bge-': BgeModelLogo,
+    'voyage-': VoyageModelLogo
   }
 
   for (const key in logoMap) {
@@ -1539,15 +1547,15 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
       group: 'Llama3'
     },
     {
-      id: 'mixtral-8x7b-32768',
+      id: 'mistral-saba-24b',
       provider: 'groq',
-      name: 'Mixtral 8x7B',
-      group: 'Mixtral'
+      name: 'Mistral Saba 24B',
+      group: 'Mistral'
     },
     {
-      id: 'gemma-7b-it',
+      id: 'gemma-9b-it',
       provider: 'groq',
-      name: 'Gemma 7B',
+      name: 'Gemma 9B',
       group: 'Gemma'
     }
   ],
@@ -1802,7 +1810,63 @@ export const SYSTEM_MODELS: Record<string, Model[]> = {
       group: 'DeepSeek'
     }
   ],
-  gpustack: []
+  gpustack: [],
+  voyageai: [
+    {
+      id: 'voyage-3-large',
+      provider: 'voyageai',
+      name: 'voyage-3-large',
+      group: 'Voyage Embeddings V3'
+    },
+    {
+      id: 'voyage-3',
+      provider: 'voyageai',
+      name: 'voyage-3',
+      group: 'Voyage Embeddings V3'
+    },
+    {
+      id: 'voyage-3-lite',
+      provider: 'voyageai',
+      name: 'voyage-3-lite',
+      group: 'Voyage Embeddings V3'
+    },
+    {
+      id: 'voyage-code-3',
+      provider: 'voyageai',
+      name: 'voyage-code-3',
+      group: 'Voyage Embeddings V3'
+    },
+    {
+      id: 'voyage-finance-3',
+      provider: 'voyageai',
+      name: 'voyage-finance-3',
+      group: 'Voyage Embeddings V2'
+    },
+    {
+      id: 'voyage-law-2',
+      provider: 'voyageai',
+      name: 'voyage-law-2',
+      group: 'Voyage Embeddings V2'
+    },
+    {
+      id: 'voyage-code-2',
+      provider: 'voyageai',
+      name: 'voyage-code-2',
+      group: 'Voyage Embeddings V2'
+    },
+    {
+      id: 'rerank-2',
+      provider: 'voyageai',
+      name: 'rerank-2',
+      group: 'Voyage Rerank V2'
+    },
+    {
+      id: 'rerank-2-lite',
+      provider: 'voyageai',
+      name: 'rerank-2-lite',
+      group: 'Voyage Rerank V2'
+    }
+  ]
 }
 
 export const TEXT_TO_IMAGES_MODELS = [
@@ -1934,6 +1998,18 @@ export function isOpenAIoSeries(model: Model): boolean {
   return ['o1', 'o1-2024-12-17'].includes(model.id) || model.id.includes('o3')
 }
 
+export function isSupportedResoningEffortModel(model?: Model): boolean {
+  if (!model) {
+    return false
+  }
+
+  if (model.id.includes('claude-3-7-sonnet') || model.id.includes('claude-3.7-sonnet') || isOpenAIoSeries(model)) {
+    return true
+  }
+
+  return false
+}
+
 export function isReasoningModel(model?: Model): boolean {
   if (!model) {
     return false
@@ -1944,6 +2020,10 @@ export function isReasoningModel(model?: Model): boolean {
   }
 
   if (model.id.includes('claude-3-7-sonnet') || model.id.includes('claude-3.7-sonnet') || isOpenAIoSeries(model)) {
+    return true
+  }
+
+  if (model.id.includes('gemini-2.5-pro-exp')) {
     return true
   }
 
@@ -1987,7 +2067,9 @@ export function isWebSearchModel(model: Model): boolean {
       'gemini-2.0-flash-exp',
       'gemini-2.0-flash-001',
       'gemini-2.0-pro-exp-02-05',
-      'gemini-2.0-pro-exp'
+      'gemini-2.0-pro-exp',
+      'gemini-2.5-pro-exp',
+      'gemini-2.5-pro-exp-03-25'
     ]
     return models.includes(model?.id)
   }

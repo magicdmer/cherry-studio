@@ -1,6 +1,7 @@
 import { CheckOutlined, ExportOutlined, HeartOutlined, LoadingOutlined, SettingOutlined } from '@ant-design/icons'
 import { HStack } from '@renderer/components/Layout'
 import OAuthButton from '@renderer/components/OAuth/OAuthButton'
+import { isEmbeddingModel, isRerankModel } from '@renderer/config/models'
 import { PROVIDER_CONFIG } from '@renderer/config/providers'
 import { useTheme } from '@renderer/context/ThemeProvider'
 import { useProvider } from '@renderer/hooks/useProvider'
@@ -14,8 +15,8 @@ import { formatApiHost } from '@renderer/utils/api'
 import { providerCharge } from '@renderer/utils/oauth'
 import { Button, Divider, Flex, Input, Space, Switch, Tooltip } from 'antd'
 import Link from 'antd/es/typography/Link'
-import { isEmpty } from 'lodash'
-import { FC, useEffect, useState } from 'react'
+import { debounce, isEmpty } from 'lodash'
+import { FC, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
 
@@ -54,6 +55,7 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
   const { updateProvider, models } = useProvider(provider.id)
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const [inputValue, setInputValue] = useState(apiKey)
 
   const isAzureOpenAI = provider.id === 'azure-openai' || provider.type === 'azure-openai'
 
@@ -64,6 +66,14 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
 
   const [modelStatuses, setModelStatuses] = useState<ModelStatus[]>([])
   const [isHealthChecking, setIsHealthChecking] = useState(false)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSetApiKey = useCallback(
+    debounce((value) => {
+      setApiKey(formatApiKeys(value))
+    }, 100),
+    []
+  )
 
   const onUpdateApiKey = () => {
     if (apiKey !== provider.apiKey) {
@@ -82,12 +92,14 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
   const onUpdateApiVersion = () => updateProvider({ ...provider, apiVersion })
 
   const onHealthCheck = async () => {
-    if (isEmpty(models)) {
+    const modelsToCheck = models.filter((model) => !isRerankModel(model))
+
+    if (isEmpty(modelsToCheck)) {
       window.message.error({
         key: 'no-models',
         style: { marginTop: '3vh' },
         duration: 5,
-        content: t('settings.provider.no_models')
+        content: t('settings.provider.no_models_for_check')
       })
       return
     }
@@ -115,7 +127,7 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
     }
 
     // Prepare the list of models to be checked
-    const initialStatuses = models.map((model) => ({
+    const initialStatuses = modelsToCheck.map((model) => ({
       model,
       checking: true,
       status: undefined
@@ -126,7 +138,7 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
     const checkResults = await checkModelsHealth(
       {
         provider: { ...provider, apiHost },
-        models,
+        models: modelsToCheck,
         apiKeys: result.apiKeys,
         isConcurrent: result.isConcurrent
       },
@@ -171,12 +183,14 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
   }
 
   const onCheckApi = async () => {
-    if (isEmpty(models)) {
+    const modelsToCheck = models.filter((model) => !isEmbeddingModel(model) && !isRerankModel(model))
+
+    if (isEmpty(modelsToCheck)) {
       window.message.error({
         key: 'no-models',
         style: { marginTop: '3vh' },
         duration: 5,
-        content: t('settings.provider.no_models')
+        content: t('settings.provider.no_models_for_check')
       })
       return
     }
@@ -286,12 +300,19 @@ const ProviderSetting: FC<Props> = ({ provider: _provider }) => {
       <SettingSubtitle style={{ marginTop: 5 }}>{t('settings.provider.api_key')}</SettingSubtitle>
       <Space.Compact style={{ width: '100%', marginTop: 5 }}>
         <Input.Password
-          value={apiKey}
+          value={inputValue}
           placeholder={t('settings.provider.api_key')}
-          onChange={(e) => setApiKey(formatApiKeys(e.target.value))}
-          onBlur={onUpdateApiKey}
+          onChange={(e) => {
+            setInputValue(e.target.value)
+            debouncedSetApiKey(e.target.value)
+          }}
+          onBlur={() => {
+            const formattedValue = formatApiKeys(inputValue)
+            setInputValue(formattedValue)
+            setApiKey(formattedValue)
+            onUpdateApiKey()
+          }}
           spellCheck={false}
-          type="password"
           autoFocus={provider.enabled && apiKey === ''}
           disabled={provider.id === 'copilot'}
         />

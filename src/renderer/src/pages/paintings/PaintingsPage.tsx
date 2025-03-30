@@ -23,7 +23,7 @@ import { translateText } from '@renderer/services/TranslateService'
 import { useAppDispatch } from '@renderer/store'
 import { DEFAULT_PAINTING } from '@renderer/store/paintings'
 import { setGenerating } from '@renderer/store/runtime'
-import { FileType, Painting } from '@renderer/types'
+import type { FileType, Painting } from '@renderer/types'
 import { getErrorMessage } from '@renderer/utils'
 import { Button, Input, InputNumber, Radio, Select, Slider, Switch, Tooltip } from 'antd'
 import TextArea from 'antd/es/input/TextArea'
@@ -302,7 +302,7 @@ const PaintingsPage: FC = () => {
   const { autoTranslateWithSpace } = useSettings()
   const [spaceClickCount, setSpaceClickCount] = useState(0)
   const [isTranslating, setIsTranslating] = useState(false)
-  const spaceClickTimer = useRef<NodeJS.Timeout>()
+  const spaceClickTimer = useRef<NodeJS.Timeout>(null)
 
   const translate = async () => {
     if (isTranslating) {

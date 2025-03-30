@@ -164,7 +164,7 @@ export interface Painting {
 }
 
 export type MinAppType = {
-  id?: string | number
+  id: string
   name: string
   logo?: string
   url: string
@@ -310,6 +310,7 @@ export type GenerateImageParams = {
 }
 
 export type GenerateImageResponse = {
+  type: 'url' | 'base64'
   images: string[]
 }
 
@@ -363,6 +364,7 @@ export interface MCPServerParameter {
 }
 
 export interface MCPServer {
+  id: string
   name: string
   description?: string
   baseUrl?: string
@@ -382,6 +384,7 @@ export interface MCPToolInputSchema {
 
 export interface MCPTool {
   id: string
+  serverId: string
   serverName: string
   name: string
   description?: string

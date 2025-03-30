@@ -14,14 +14,13 @@ interface InputBarProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const InputBar = ({
-  ref,
+const InputBar = React.forwardRef<HTMLDivElement, InputBarProps>(({
   text,
   model,
   placeholder,
   handleKeyDown,
   handleChange
-}: InputBarProps & { ref?: React.RefObject<HTMLDivElement | null> }) => {
+}, ref) => {
   const { generating } = useRuntime()
   const inputRef = useRef<InputRef>(null)
   if (!generating) {
@@ -42,7 +41,7 @@ const InputBar = ({
       />
     </InputWrapper>
   )
-}
+})
 InputBar.displayName = 'InputBar'
 
 const InputWrapper = styled.div`

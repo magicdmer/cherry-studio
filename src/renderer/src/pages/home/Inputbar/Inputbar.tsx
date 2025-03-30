@@ -87,7 +87,7 @@ const Inputbar: FC<Props> = ({ assistant: _assistant, setActiveTopic, topic }) =
   const loading = useTopicLoading(topic)
   const dispatch = useAppDispatch()
   const [spaceClickCount, setSpaceClickCount] = useState(0)
-  const spaceClickTimer = useRef<NodeJS.Timeout>(null)
+  const spaceClickTimer = useRef<NodeJS.Timeout | null>(null)
   const [isTranslating, setIsTranslating] = useState(false)
   const [selectedKnowledgeBases, setSelectedKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [mentionModels, setMentionModels] = useState<Model[]>([])

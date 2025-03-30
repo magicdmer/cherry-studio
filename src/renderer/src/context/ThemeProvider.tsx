@@ -1,7 +1,7 @@
 import { isMac } from '@renderer/config/constant'
 import { useSettings } from '@renderer/hooks/useSettings'
 import { ThemeMode } from '@renderer/types'
-import React, { createContext, PropsWithChildren, use, useEffect, useState } from 'react'
+import React, { createContext, PropsWithChildren, useContext, useEffect, useState } from 'react'
 
 interface ThemeContextType {
   theme: ThemeMode
@@ -57,7 +57,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, defaultT
     }
   })
 
-  return <ThemeContext value={{ theme: _theme, settingTheme: theme, toggleTheme }}>{children}</ThemeContext>
+  return (
+    <ThemeContext.Provider value={{ theme: _theme, settingTheme: theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  )
 }
 
-export const useTheme = () => use(ThemeContext)
+export const useTheme = () => useContext(ThemeContext)

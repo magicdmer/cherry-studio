@@ -302,7 +302,7 @@ const PaintingsPage: FC = () => {
   const { autoTranslateWithSpace } = useSettings()
   const [spaceClickCount, setSpaceClickCount] = useState(0)
   const [isTranslating, setIsTranslating] = useState(false)
-  const spaceClickTimer = useRef<NodeJS.Timeout>(null)
+  const spaceClickTimer = useRef<NodeJS.Timeout | null>(null)
 
   const translate = async () => {
     if (isTranslating) {

@@ -620,7 +620,7 @@ export default class OpenAIProvider extends BaseProvider {
       // @ts-ignore key is not typed
       .create(
         {
-          model: model.id,
+          model: model_name,
           messages: reqMessages,
           temperature: this.getTemperature(assistant, model),
           top_p: this.getTopP(assistant, model),

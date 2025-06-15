@@ -384,6 +384,39 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
     return sdkPayload.messages || []
   }
 
+  /**
+   * 处理 GPTs 插件逻辑的私有方法
+   * 检测助手提示词是否为GPTs插件格式，如果是则返回修改后的模型和系统提示词
+   * @private
+   */
+  private processGPTsPlugin(assistant: Assistant, model: Model): { model: Model; assistant: Assistant } {
+    const gptPluginRegex = /^g-[a-zA-Z0-9]+$/
+    const isGPTsPlugin = gptPluginRegex.test((assistant.prompt || '').trim())
+    
+    if (!isGPTsPlugin) {
+      return { model, assistant }
+    }
+
+    const pluginId = assistant.prompt.trim()
+    const expectedModelId = `gpt-4-gizmo-${pluginId}`
+    
+    // 创建 GPTs 插件模型
+    const gizmoModel = {
+      ...model,
+      id: expectedModelId,
+      name: expectedModelId
+    }
+    
+    // GPTs 插件不能接收系统提示词，所以清空
+    const modifiedAssistant = {
+      ...assistant,
+      prompt: ''
+    }
+    
+    
+    return { model: gizmoModel, assistant: modifiedAssistant }
+  }
+
   getRequestTransformer(): RequestTransformer<OpenAISdkParams, OpenAISdkMessageParam> {
     return {
       transform: async (
@@ -398,6 +431,12 @@ export class OpenAIAPIClient extends OpenAIBaseClient<
         metadata: Record<string, any>
       }> => {
         const { messages, mcpTools, maxTokens, streamOutput, enableWebSearch } = coreRequest
+        
+        // 处理 GPTs 插件逻辑 - 直接覆盖原变量以最小化代码修改
+        const gptResult = this.processGPTsPlugin(assistant, model)
+        model = gptResult.model
+        assistant = gptResult.assistant
+        
         // 1. 处理系统消息
         let systemMessage = { role: 'system', content: assistant.prompt || '' }
 

@@ -52,7 +52,8 @@ const Markdown: FC<Props> = ({ block }) => {
     const empty = isEmpty(block.content)
     const paused = block.status === 'paused'
     const content = empty && paused ? t('message.chat.completion.paused') : block.content
-    return removeSvgEmptyLines(processLatexBrackets(content))
+    const protectedContent = content.replace(/(?<!\\)(?<!~)~([^~]+)~(?!~)/g, '\\~$1\\~')
+    return removeSvgEmptyLines(processLatexBrackets(protectedContent))
   }, [block, t])
 
   const rehypePlugins = useMemo(() => {

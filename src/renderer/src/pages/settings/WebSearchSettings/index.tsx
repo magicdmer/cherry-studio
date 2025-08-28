@@ -33,19 +33,19 @@ const WebSearchSettings: FC = () => {
   return (
     <SettingContainer theme={themeMode}>
       <SettingGroup theme={themeMode}>
-        <SettingTitle>{t('settings.websearch.title')}</SettingTitle>
+        <SettingTitle>{t('settings.tool.websearch.title')}</SettingTitle>
         <SettingDivider />
         <SettingRow>
-          <SettingRowTitle>{t('settings.websearch.search_provider')}</SettingRowTitle>
+          <SettingRowTitle>{t('settings.tool.websearch.search_provider')}</SettingRowTitle>
           <div style={{ display: 'flex', gap: '8px' }}>
             <Selector
               size={14}
               value={selectedProvider?.id}
               onChange={(value: string) => updateSelectedWebSearchProvider(value)}
-              placeholder={t('settings.websearch.search_provider_placeholder')}
+              placeholder={t('settings.tool.websearch.search_provider_placeholder')}
               options={providers.map((p) => ({
                 value: p.id,
-                label: `${p.name} (${hasObjectKey(p, 'apiKey') ? t('settings.websearch.apikey') : t('settings.websearch.free')})`
+                label: `${p.name} (${hasObjectKey(p, 'apiKey') ? t('settings.tool.websearch.apikey') : t('settings.tool.websearch.free')})`
               }))}
             />
           </div>
@@ -53,7 +53,7 @@ const WebSearchSettings: FC = () => {
       </SettingGroup>
       {!isLocalProvider && (
         <SettingGroup theme={themeMode}>
-          {selectedProvider && <WebSearchProviderSetting provider={selectedProvider} />}
+          {selectedProvider && <WebSearchProviderSetting providerId={selectedProvider.id} />}
         </SettingGroup>
       )}
       <BasicSettings />

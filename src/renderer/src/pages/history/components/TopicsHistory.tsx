@@ -1,14 +1,17 @@
 import { SearchOutlined } from '@ant-design/icons'
 import { VStack } from '@renderer/components/Layout'
-import { useAssistants } from '@renderer/hooks/useAssistant'
 import useScrollPosition from '@renderer/hooks/useScrollPosition'
-import { getTopicById } from '@renderer/hooks/useTopic'
+import { selectAllTopics } from '@renderer/store/assistants'
 import { Topic } from '@renderer/types'
-import { Button, Divider, Empty } from 'antd'
+import { Button, Divider, Empty, Segmented } from 'antd'
 import dayjs from 'dayjs'
 import { groupBy, isEmpty, orderBy } from 'lodash'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSelector } from 'react-redux'
 import styled from 'styled-components'
+
+type SortType = 'createdAt' | 'updatedAt'
 
 type Props = {
   keywords: string
@@ -17,18 +20,19 @@ type Props = {
 } & React.HTMLAttributes<HTMLDivElement>
 
 const TopicsHistory: React.FC<Props> = ({ keywords, onClick, onSearch, ...props }) => {
-  const { assistants } = useAssistants()
   const { t } = useTranslation()
   const { handleScroll, containerRef } = useScrollPosition('TopicsHistory')
+  const [sortType, setSortType] = useState<SortType>('createdAt')
 
-  const topics = orderBy(assistants.map((assistant) => assistant.topics).flat(), 'createdAt', 'desc')
+  // FIXME: db 中没有 topic.name 等信息，只能从 store 获取
+  const topics = useSelector(selectAllTopics)
 
   const filteredTopics = topics.filter((topic) => {
     return topic.name.toLowerCase().includes(keywords.toLowerCase())
   })
 
-  const groupedTopics = groupBy(filteredTopics, (topic) => {
-    return dayjs(topic.createdAt).format('MM/DD')
+  const groupedTopics = groupBy(orderBy(filteredTopics, sortType, 'desc'), (topic) => {
+    return dayjs(topic[sortType]).format('MM/DD')
   })
 
   if (isEmpty(filteredTopics)) {
@@ -46,25 +50,30 @@ const TopicsHistory: React.FC<Props> = ({ keywords, onClick, onSearch, ...props 
 
   return (
     <ListContainer {...props} ref={containerRef} onScroll={handleScroll}>
+      <Segmented
+        shape="round"
+        size="small"
+        value={sortType}
+        onChange={setSortType}
+        options={[
+          { label: t('export.created'), value: 'createdAt' },
+          { label: t('export.last_updated'), value: 'updatedAt' }
+        ]}
+      />
       <ContainerWrapper>
         {Object.entries(groupedTopics).map(([date, items]) => (
           <ListItem key={date}>
             <Date>{date}</Date>
             <Divider style={{ margin: '5px 0' }} />
             {items.map((topic) => (
-              <TopicItem
-                key={topic.id}
-                onClick={async () => {
-                  const _topic = await getTopicById(topic.id)
-                  onClick(_topic)
-                }}>
+              <TopicItem key={topic.id} onClick={() => onClick(topic)}>
                 <TopicName>{topic.name.substring(0, 50)}</TopicName>
-                <TopicDate>{dayjs(topic.updatedAt).format('HH:mm')}</TopicDate>
+                <TopicDate>{dayjs(topic[sortType]).format('HH:mm')}</TopicDate>
               </TopicItem>
             ))}
           </ListItem>
         ))}
-        {keywords.length >= 2 && (
+        {keywords && (
           <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
             <Button style={{ width: 200, marginTop: 20 }} type="primary" onClick={onSearch} icon={<SearchOutlined />}>
               {t('history.search.messages')}
@@ -91,7 +100,7 @@ const ListContainer = styled.div`
   overflow-y: scroll;
   width: 100%;
   align-items: center;
-  padding-top: 20px;
+  padding-top: 10px;
   padding-bottom: 20px;
 `
 

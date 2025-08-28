@@ -1,12 +1,17 @@
+import { loggerService } from '@logger'
 import { Center, VStack } from '@renderer/components/Layout'
+import ProviderLogoPicker from '@renderer/components/ProviderLogoPicker'
 import { TopView } from '@renderer/components/TopView'
+import { PROVIDER_LOGO_MAP } from '@renderer/config/providers'
 import ImageStorage from '@renderer/services/ImageStorage'
 import { Provider, ProviderType } from '@renderer/types'
-import { compressImage } from '@renderer/utils'
-import { Divider, Dropdown, Form, Input, Modal, Select, Upload } from 'antd'
+import { compressImage, generateColorFromChar } from '@renderer/utils'
+import { Divider, Dropdown, Form, Input, Modal, Popover, Select, Upload } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import styled from 'styled-components'
+
+const logger = loggerService.withContext('AddProviderPopup')
 
 interface Props {
   provider?: Provider
@@ -18,6 +23,7 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
   const [name, setName] = useState(provider?.name || '')
   const [type, setType] = useState<ProviderType>(provider?.type || 'openai')
   const [logo, setLogo] = useState<string | null>(null)
+  const [logoPickerOpen, setLogoPickerOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { t } = useTranslation()
 
@@ -30,7 +36,7 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
             setLogo(logoData)
           }
         } catch (error) {
-          console.error('Failed to load logo', error)
+          logger.error('Failed to load logo', error as Error)
         }
       }
       loadLogo()
@@ -46,7 +52,6 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
       type,
       logo: logo || undefined
     }
-
     resolve(result)
   }
 
@@ -60,6 +65,25 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
   }
 
   const buttonDisabled = name.length === 0
+
+  // 处理内置头像的点击事件
+  const handleProviderLogoClick = async (providerId: string) => {
+    try {
+      const logoUrl = PROVIDER_LOGO_MAP[providerId]
+
+      if (provider?.id) {
+        await ImageStorage.set(`provider-${provider.id}`, logoUrl)
+        const savedLogo = await ImageStorage.get(`provider-${provider.id}`)
+        setLogo(savedLogo)
+      } else {
+        setLogo(logoUrl)
+      }
+
+      setLogoPickerOpen(false)
+    } catch (error: any) {
+      window.message.error(error.message)
+    }
+  }
 
   const handleReset = async () => {
     try {
@@ -76,7 +100,7 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
   }
 
   const getInitials = () => {
-    return name.charAt(0).toUpperCase() || 'P'
+    return name.charAt(0) || 'P'
   }
 
   const items = [
@@ -130,6 +154,20 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
       )
     },
     {
+      key: 'builtin',
+      label: (
+        <div
+          style={{ width: '100%', textAlign: 'center' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setDropdownOpen(false)
+            setLogoPickerOpen(true)
+          }}>
+          {t('settings.general.avatar.builtin')}
+        </div>
+      )
+    },
+    {
       key: 'reset',
       label: (
         <div
@@ -168,14 +206,36 @@ const PopupContainer: React.FC<Props> = ({ provider, resolve }) => {
             placement="bottom"
             onOpenChange={(visible) => {
               setDropdownOpen(visible)
+              if (visible) {
+                setLogoPickerOpen(false)
+              }
             }}>
-            {logo ? <ProviderLogo src={logo} /> : <ProviderInitialsLogo>{getInitials()}</ProviderInitialsLogo>}
+            <Popover
+              content={<ProviderLogoPicker onProviderClick={handleProviderLogoClick} />}
+              trigger="click"
+              open={logoPickerOpen}
+              onOpenChange={(visible) => {
+                setLogoPickerOpen(visible)
+                if (visible) {
+                  setDropdownOpen(false)
+                }
+              }}
+              placement="bottom">
+              {logo ? (
+                <ProviderLogo src={logo} />
+              ) : (
+                <ProviderInitialsLogo
+                  style={name ? { backgroundColor: generateColorFromChar(name) } : { color: 'black' }}>
+                  {getInitials()}
+                </ProviderInitialsLogo>
+              )}
+            </Popover>
           </Dropdown>
         </VStack>
       </Center>
 
       <Form layout="vertical" style={{ gap: 8 }}>
-        <Form.Item label={t('settings.provider.add.name')} style={{ marginBottom: 8 }}>
+        <Form.Item label={t('settings.provider.add.name.label')} style={{ marginBottom: 8 }}>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value.trim())}
@@ -234,6 +294,7 @@ const ProviderInitialsLogo = styled.div`
   transition: opacity 0.3s ease;
   background-color: var(--color-background-soft);
   border: 0.5px solid var(--color-border);
+  color: white;
   &:hover {
     opacity: 0.8;
   }
@@ -245,7 +306,12 @@ export default class AddProviderPopup {
     TopView.hide('AddProviderPopup')
   }
   static show(provider?: Provider) {
-    return new Promise<{ name: string; type: ProviderType; logo?: string; logoFile?: File }>((resolve) => {
+    return new Promise<{
+      name: string
+      type: ProviderType
+      logo?: string
+      logoFile?: File
+    }>((resolve) => {
       TopView.show(
         <PopupContainer
           provider={provider}

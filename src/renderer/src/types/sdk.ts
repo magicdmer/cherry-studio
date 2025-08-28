@@ -8,6 +8,9 @@ import {
   ToolUseBlock
 } from '@anthropic-ai/sdk/resources'
 import { MessageStream } from '@anthropic-ai/sdk/resources/messages/messages'
+import AnthropicVertex from '@anthropic-ai/vertex-sdk'
+import type { BedrockClient } from '@aws-sdk/client-bedrock'
+import type { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime'
 import {
   Content,
   CreateChatParameters,
@@ -21,22 +24,46 @@ import {
 import OpenAI, { AzureOpenAI } from 'openai'
 import { Stream } from 'openai/streaming'
 
-export type SdkInstance = OpenAI | AzureOpenAI | Anthropic | GoogleGenAI
-export type SdkParams = OpenAISdkParams | OpenAIResponseSdkParams | AnthropicSdkParams | GeminiSdkParams
-export type SdkRawChunk = OpenAISdkRawChunk | OpenAIResponseSdkRawChunk | AnthropicSdkRawChunk | GeminiSdkRawChunk
-export type SdkRawOutput = OpenAISdkRawOutput | OpenAIResponseSdkRawOutput | AnthropicSdkRawOutput | GeminiSdkRawOutput
+import { EndpointType } from './index'
+
+export type SdkInstance = OpenAI | AzureOpenAI | Anthropic | AnthropicVertex | GoogleGenAI | AwsBedrockSdkInstance
+export type SdkParams =
+  | OpenAISdkParams
+  | OpenAIResponseSdkParams
+  | AnthropicSdkParams
+  | GeminiSdkParams
+  | AwsBedrockSdkParams
+export type SdkRawChunk =
+  | OpenAISdkRawChunk
+  | OpenAIResponseSdkRawChunk
+  | AnthropicSdkRawChunk
+  | GeminiSdkRawChunk
+  | AwsBedrockSdkRawChunk
+export type SdkRawOutput =
+  | OpenAISdkRawOutput
+  | OpenAIResponseSdkRawOutput
+  | AnthropicSdkRawOutput
+  | GeminiSdkRawOutput
+  | AwsBedrockSdkRawOutput
 export type SdkMessageParam =
   | OpenAISdkMessageParam
   | OpenAIResponseSdkMessageParam
   | AnthropicSdkMessageParam
   | GeminiSdkMessageParam
+  | AwsBedrockSdkMessageParam
 export type SdkToolCall =
   | OpenAI.Chat.Completions.ChatCompletionMessageToolCall
   | ToolUseBlock
   | FunctionCall
   | OpenAIResponseSdkToolCall
-export type SdkTool = OpenAI.Chat.Completions.ChatCompletionTool | ToolUnion | Tool | OpenAIResponseSdkTool
-export type SdkModel = OpenAI.Models.Model | Anthropic.ModelInfo | GeminiModel
+  | AwsBedrockSdkToolCall
+export type SdkTool =
+  | OpenAI.Chat.Completions.ChatCompletionTool
+  | ToolUnion
+  | Tool
+  | OpenAIResponseSdkTool
+  | AwsBedrockSdkTool
+export type SdkModel = OpenAI.Models.Model | Anthropic.ModelInfo | GeminiModel | NewApiModel
 
 export type RequestOptions = Anthropic.RequestOptions | OpenAI.RequestOptions | GeminiOptions
 
@@ -52,17 +79,27 @@ export type ReasoningEffortOptionalParams = {
   reasoning_effort?: OpenAI.Chat.Completions.ChatCompletionCreateParams['reasoning_effort'] | 'none' | 'auto'
   enable_thinking?: boolean
   thinking_budget?: number
+  incremental_output?: boolean
   enable_reasoning?: boolean
-  extra_body?: Record<string, any>
+  extra_body?: {
+    google?: {
+      thinking_config: {
+        thinking_budget: number
+        include_thoughts?: boolean
+      }
+    }
+  }
   // Add any other potential reasoning-related keys here if they exist
 }
 
 export type OpenAISdkParams = OpenAIParamsWithoutReasoningEffort & ReasoningEffortOptionalParams
+
+// OpenRouter may include additional fields like cost
 export type OpenAISdkRawChunk =
-  | OpenAI.Chat.Completions.ChatCompletionChunk
+  | (OpenAI.Chat.Completions.ChatCompletionChunk & { usage?: OpenAI.CompletionUsage & { cost?: number } })
   | ({
       _request_id?: string | null | undefined
-    } & OpenAI.ChatCompletion)
+    } & OpenAI.ChatCompletion & { usage?: OpenAI.CompletionUsage & { cost?: number } })
 
 export type OpenAISdkRawOutput = Stream<OpenAI.Chat.Completions.ChatCompletionChunk> | OpenAI.ChatCompletion
 export type OpenAISdkRawContentSource =
@@ -105,4 +142,147 @@ export type GeminiOptions = {
   streamOutput: boolean
   signal?: AbortSignal
   timeout?: number
+}
+
+/**
+ * New API
+ */
+export interface NewApiModel extends OpenAI.Models.Model {
+  supported_endpoint_types?: EndpointType[]
+}
+
+/**
+ * AWS Bedrock
+ */
+export interface AwsBedrockSdkInstance {
+  client: BedrockRuntimeClient
+  bedrockClient: BedrockClient
+  region: string
+}
+
+export interface AwsBedrockSdkParams {
+  modelId: string
+  messages: AwsBedrockSdkMessageParam[]
+  system?: string
+  maxTokens?: number
+  temperature?: number
+  topP?: number
+  stream?: boolean
+  tools?: AwsBedrockSdkTool[]
+  [key: string]: any // Allow any additional custom parameters
+}
+
+export interface AwsBedrockSdkMessageParam {
+  role: 'user' | 'assistant'
+  content: Array<{
+    text?: string
+    image?: {
+      format: 'png' | 'jpeg' | 'gif' | 'webp'
+      source: {
+        bytes?: Uint8Array
+        s3Location?: {
+          uri: string
+          bucketOwner?: string
+        }
+      }
+    }
+    toolResult?: {
+      toolUseId: string
+      content: Array<{
+        json?: any
+        text?: string
+        image?: {
+          format: 'png' | 'jpeg' | 'gif' | 'webp'
+          source: {
+            bytes?: Uint8Array
+            s3Location?: {
+              uri: string
+              bucketOwner?: string
+            }
+          }
+        }
+        document?: any
+        video?: any
+      }>
+      status?: 'success' | 'error'
+    }
+    toolUse?: {
+      toolUseId: string
+      name: string
+      input: any
+    }
+  }>
+}
+
+export interface AwsBedrockStreamChunk {
+  type: string
+  delta?: {
+    text?: string
+    toolUse?: { input?: string }
+    type?: string
+    thinking?: string
+  }
+  index?: number
+  content_block?: any
+  usage?: {
+    inputTokens?: number
+    outputTokens?: number
+  }
+}
+
+export interface AwsBedrockSdkRawChunk {
+  contentBlockStart?: {
+    start?: {
+      toolUse?: {
+        toolUseId: string
+        name: string
+      }
+    }
+    contentBlockIndex?: number
+  }
+  contentBlockDelta?: {
+    delta?: {
+      text?: string
+      toolUse?: {
+        input?: string
+      }
+      type?: string // 支持 'thinking_delta' 等类型
+      thinking?: string // 支持 thinking 内容
+    }
+    contentBlockIndex?: number
+  }
+  contentBlockStop?: {
+    contentBlockIndex?: number
+  }
+  messageStart?: any
+  messageStop?: any
+  metadata?: any
+}
+
+export type AwsBedrockSdkRawOutput = { output: any } | AsyncIterable<AwsBedrockSdkRawChunk>
+
+export interface AwsBedrockSdkTool {
+  toolSpec: {
+    name: string
+    description?: string
+    inputSchema: {
+      json: {
+        type: string
+        properties?: {
+          [key: string]: {
+            type: string
+            description?: string
+          }
+        }
+        required?: string[]
+      }
+    }
+  }
+}
+
+export interface AwsBedrockSdkToolCall {
+  id: string
+  name: string
+  input: any
+  toolUseId: string
 }

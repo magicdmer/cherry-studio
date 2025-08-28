@@ -1,6 +1,6 @@
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd'
 import { QuickPanelListItem } from '@renderer/components/QuickPanel'
-import { isGenerateImageModel, isVisionModel } from '@renderer/config/models'
+import { isGenerateImageModel, isMandatoryWebSearchModel } from '@renderer/config/models'
 import { useAppDispatch, useAppSelector } from '@renderer/store'
 import { setIsCollapsed, setToolOrder } from '@renderer/store/inputTools'
 import { Assistant, FileType, KnowledgeBase, Model } from '@renderer/types'
@@ -13,8 +13,9 @@ import {
   CircleChevronRight,
   FileSearch,
   Globe,
+  Hammer,
   Languages,
-  LucideSquareTerminal,
+  Link,
   Maximize,
   MessageSquareDiff,
   Minimize,
@@ -36,27 +37,28 @@ import MentionModelsButton, { MentionModelsButtonRef } from './MentionModelsButt
 import NewContextButton from './NewContextButton'
 import QuickPhrasesButton, { QuickPhrasesButtonRef } from './QuickPhrasesButton'
 import ThinkingButton, { ThinkingButtonRef } from './ThinkingButton'
+import UrlContextButton, { UrlContextButtonRef } from './UrlContextbutton'
 import WebSearchButton, { WebSearchButtonRef } from './WebSearchButton'
 
 export interface InputbarToolsRef {
   getQuickPanelMenu: (params: {
     t: (key: string, options?: any) => string
     files: FileType[]
-    model: Model
+    couldAddImageFile: boolean
     text: string
     openSelectFileMenu: () => void
     translate: () => void
   }) => QuickPanelListItem[]
-  openMentionModelsPanel: () => void
-  openQuickPanel: () => void
+  openMentionModelsPanel: (triggerInfo?: { type: 'input' | 'button'; position?: number; originalText?: string }) => void
+  openAttachmentQuickPanel: () => void
 }
 
 export interface InputbarToolsProps {
   assistant: Assistant
   model: Model
-
   files: FileType[]
   setFiles: (files: FileType[]) => void
+  extensions: string[]
   showThinkingButton: boolean
   showKnowledgeIcon: boolean
   selectedKnowledgeBases: KnowledgeBase[]
@@ -65,9 +67,12 @@ export interface InputbarToolsProps {
   resizeTextArea: () => void
   mentionModels: Model[]
   onMentionModel: (model: Model) => void
+  onClearMentionModels: () => void
+  couldMentionNotVisionModel: boolean
+  couldAddImageFile: boolean
   onEnableGenerateImage: () => void
-  isExpended: boolean
-  onToggleExpended: () => void
+  isExpanded: boolean
+  onToggleExpanded: () => void
 
   addNewTopic: () => void
   clearTopic: () => void
@@ -104,14 +109,18 @@ const InputbarTools = ({
   resizeTextArea,
   mentionModels,
   onMentionModel,
+  onClearMentionModels,
+  couldMentionNotVisionModel,
+  couldAddImageFile,
   onEnableGenerateImage,
-  isExpended,
-  onToggleExpended,
+  isExpanded: isExpended,
+  onToggleExpanded: onToggleExpended,
   addNewTopic,
   clearTopic,
   onNewContext,
   newTopicShortcut,
-  cleanTopicShortcut
+  cleanTopicShortcut,
+  extensions
 }: InputbarToolsProps & { ref?: React.RefObject<InputbarToolsRef | null> }) => {
   const { t } = useTranslation()
   const dispatch = useAppDispatch()
@@ -123,6 +132,7 @@ const InputbarTools = ({
   const attachmentButtonRef = useRef<AttachmentButtonRef>(null)
   const webSearchButtonRef = useRef<WebSearchButtonRef | null>(null)
   const thinkingButtonRef = useRef<ThinkingButtonRef | null>(null)
+  const urlContextButtonRef = useRef<UrlContextButtonRef | null>(null)
 
   const toolOrder = useAppSelector((state) => state.inputTools.toolOrder)
   const isCollapse = useAppSelector((state) => state.inputTools.isCollapsed)
@@ -153,12 +163,12 @@ const InputbarTools = ({
   const getQuickPanelMenuImpl = (params: {
     t: (key: string, options?: any) => string
     files: FileType[]
-    model: Model
+    couldAddImageFile: boolean
     text: string
     openSelectFileMenu: () => void
     translate: () => void
   }): QuickPanelListItem[] => {
-    const { t, files, model, text, openSelectFileMenu, translate } = params
+    const { t, files, couldAddImageFile, text, openSelectFileMenu, translate } = params
 
     return [
       {
@@ -192,7 +202,7 @@ const InputbarTools = ({
       {
         label: t('settings.mcp.title'),
         description: t('settings.mcp.not_support'),
-        icon: <LucideSquareTerminal />,
+        icon: <Hammer />,
         isMenu: true,
         action: () => {
           mcpToolsButtonRef.current?.openQuickPanel()
@@ -201,7 +211,7 @@ const InputbarTools = ({
       {
         label: `MCP ${t('settings.mcp.tabs.prompts')}`,
         description: '',
-        icon: <LucideSquareTerminal />,
+        icon: <Hammer />,
         isMenu: true,
         action: () => {
           mcpToolsButtonRef.current?.openPromptList()
@@ -210,14 +220,14 @@ const InputbarTools = ({
       {
         label: `MCP ${t('settings.mcp.tabs.resources')}`,
         description: '',
-        icon: <LucideSquareTerminal />,
+        icon: <Hammer />,
         isMenu: true,
         action: () => {
           mcpToolsButtonRef.current?.openResourcesList()
         }
       },
       {
-        label: t('chat.input.web_search'),
+        label: t('chat.input.web_search.label'),
         description: '',
         icon: <Globe />,
         isMenu: true,
@@ -226,7 +236,16 @@ const InputbarTools = ({
         }
       },
       {
-        label: isVisionModel(model) ? t('chat.input.upload') : t('chat.input.upload.document'),
+        label: t('chat.input.url_context'),
+        description: '',
+        icon: <Link />,
+        isMenu: true,
+        action: () => {
+          urlContextButtonRef.current?.openQuickPanel()
+        }
+      },
+      {
+        label: couldAddImageFile ? t('chat.input.upload.label') : t('chat.input.upload.document'),
         description: '',
         icon: <Paperclip />,
         isMenu: true,
@@ -275,8 +294,8 @@ const InputbarTools = ({
 
   useImperativeHandle(ref, () => ({
     getQuickPanelMenu: getQuickPanelMenuImpl,
-    openMentionModelsPanel: () => mentionModelsButtonRef.current?.openQuickPanel(),
-    openQuickPanel: () => attachmentButtonRef.current?.openQuickPanel()
+    openMentionModelsPanel: (triggerInfo) => mentionModelsButtonRef.current?.openQuickPanel(triggerInfo),
+    openAttachmentQuickPanel: () => attachmentButtonRef.current?.openQuickPanel()
   }))
 
   const toolButtons = useMemo<ToolButtonConfig[]>(() => {
@@ -285,7 +304,11 @@ const InputbarTools = ({
         key: 'new_topic',
         label: t('chat.input.new_topic', { Command: '' }),
         component: (
-          <Tooltip placement="top" title={t('chat.input.new_topic', { Command: newTopicShortcut })} arrow>
+          <Tooltip
+            placement="top"
+            title={t('chat.input.new_topic', { Command: newTopicShortcut })}
+            mouseLeaveDelay={0}
+            arrow>
             <ToolbarButton type="text" onClick={addNewTopic}>
               <MessageSquareDiff size={19} />
             </ToolbarButton>
@@ -294,11 +317,12 @@ const InputbarTools = ({
       },
       {
         key: 'attachment',
-        label: t('chat.input.upload'),
+        label: t('chat.input.upload.label'),
         component: (
           <AttachmentButton
             ref={attachmentButtonRef}
-            model={model}
+            couldAddImageFile={couldAddImageFile}
+            extensions={extensions}
             files={files}
             setFiles={setFiles}
             ToolbarButton={ToolbarButton}
@@ -307,7 +331,7 @@ const InputbarTools = ({
       },
       {
         key: 'thinking',
-        label: t('chat.input.thinking'),
+        label: t('chat.input.thinking.label'),
         component: (
           <ThinkingButton ref={thinkingButtonRef} model={model} assistant={assistant} ToolbarButton={ToolbarButton} />
         ),
@@ -315,8 +339,15 @@ const InputbarTools = ({
       },
       {
         key: 'web_search',
-        label: t('chat.input.web_search'),
-        component: <WebSearchButton ref={webSearchButtonRef} assistant={assistant} ToolbarButton={ToolbarButton} />
+        label: t('chat.input.web_search.label'),
+        component: <WebSearchButton ref={webSearchButtonRef} assistant={assistant} ToolbarButton={ToolbarButton} />,
+        condition: !isMandatoryWebSearchModel(model)
+      },
+      {
+        key: 'url_context',
+        label: t('chat.input.url_context'),
+        component: <UrlContextButton ref={urlContextButtonRef} assistant={assistant} ToolbarButton={ToolbarButton} />,
+        condition: model.id.toLowerCase().includes('gemini')
       },
       {
         key: 'knowledge_base',
@@ -364,9 +395,13 @@ const InputbarTools = ({
         component: (
           <MentionModelsButton
             ref={mentionModelsButtonRef}
-            mentionModels={mentionModels}
+            mentionedModels={mentionModels}
             onMentionModel={onMentionModel}
+            onClearMentionModels={onClearMentionModels}
             ToolbarButton={ToolbarButton}
+            couldMentionNotVisionModel={couldMentionNotVisionModel}
+            files={files}
+            setText={setText}
           />
         )
       },
@@ -385,9 +420,13 @@ const InputbarTools = ({
       },
       {
         key: 'clear_topic',
-        label: t('chat.input.clear', { Command: '' }),
+        label: t('chat.input.clear.label', { Command: '' }),
         component: (
-          <Tooltip placement="top" title={t('chat.input.clear', { Command: cleanTopicShortcut })} arrow>
+          <Tooltip
+            placement="top"
+            title={t('chat.input.clear.label', { Command: cleanTopicShortcut })}
+            mouseLeaveDelay={0}
+            arrow>
             <ToolbarButton type="text" onClick={clearTopic}>
               <PaintbrushVertical size={18} />
             </ToolbarButton>
@@ -398,7 +437,11 @@ const InputbarTools = ({
         key: 'toggle_expand',
         label: isExpended ? t('chat.input.collapse') : t('chat.input.expand'),
         component: (
-          <Tooltip placement="top" title={isExpended ? t('chat.input.collapse') : t('chat.input.expand')} arrow>
+          <Tooltip
+            placement="top"
+            title={isExpended ? t('chat.input.collapse') : t('chat.input.expand')}
+            mouseLeaveDelay={0}
+            arrow>
             <ToolbarButton type="text" onClick={onToggleExpended}>
               {isExpended ? <Minimize size={18} /> : <Maximize size={18} />}
             </ToolbarButton>
@@ -416,12 +459,16 @@ const InputbarTools = ({
     assistant,
     cleanTopicShortcut,
     clearTopic,
+    couldAddImageFile,
+    couldMentionNotVisionModel,
+    extensions,
     files,
     handleKnowledgeBaseSelect,
     isExpended,
     mentionModels,
     model,
     newTopicShortcut,
+    onClearMentionModels,
     onEnableGenerateImage,
     onMentionModel,
     onNewContext,

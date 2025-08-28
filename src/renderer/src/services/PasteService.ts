@@ -1,6 +1,8 @@
-import Logger from '@renderer/config/logger'
-import { FileType } from '@renderer/types'
-import { getFileExtension } from '@renderer/utils'
+import { loggerService } from '@logger'
+import { FileMetadata } from '@renderer/types'
+import { getFileExtension, isSupportedFile } from '@renderer/utils'
+
+const logger = loggerService.withContext('PasteService')
 
 // Track last focused component
 type ComponentType = 'inputbar' | 'messageEditor' | null
@@ -24,10 +26,8 @@ let isInitialized = false
  */
 export const handlePaste = async (
   event: ClipboardEvent,
-  isVisionModel: boolean,
-  isGenerateImageModel: boolean,
   supportExts: string[],
-  setFiles: (updater: (prevFiles: FileType[]) => FileType[]) => void,
+  setFiles: (updater: (prevFiles: FileMetadata[]) => FileMetadata[]) => void,
   setText?: (text: string) => void,
   pasteLongTextAsFile?: boolean,
   pasteLongTextThreshold?: number,
@@ -44,7 +44,7 @@ export const handlePaste = async (
         // 长文本直接转文件，阻止默认粘贴
         event.preventDefault()
 
-        const tempFilePath = await window.api.file.create('pasted_text.txt')
+        const tempFilePath = await window.api.file.createTempFile('pasted_text.txt')
         await window.api.file.write(tempFilePath, clipboardText)
         const selectedFile = await window.api.file.get(tempFilePath)
         if (selectedFile) {
@@ -57,10 +57,10 @@ export const handlePaste = async (
       // 短文本走默认粘贴行为，直接返回
       return false
     }
-
     // 2. 文件/图片粘贴（仅在无文本时处理）
     if (event.clipboardData?.files && event.clipboardData.files.length > 0) {
       event.preventDefault()
+      const extensionSet = new Set(supportExts)
       try {
         for (const file of event.clipboardData.files) {
           // 使用新的API获取文件路径
@@ -69,8 +69,8 @@ export const handlePaste = async (
           // 如果没有路径，可能是剪贴板中的图像数据
           if (!filePath) {
             // 图像生成也支持图像编辑
-            if (file.type.startsWith('image/') && (isVisionModel || isGenerateImageModel)) {
-              const tempFilePath = await window.api.file.create(file.name)
+            if (file.type.startsWith('image/') && supportExts.includes(getFileExtension(file.name))) {
+              const tempFilePath = await window.api.file.createTempFile(file.name)
               const arrayBuffer = await file.arrayBuffer()
               const uint8Array = new Uint8Array(arrayBuffer)
               await window.api.file.write(tempFilePath, uint8Array)
@@ -91,7 +91,7 @@ export const handlePaste = async (
           }
 
           // 有路径的情况
-          if (supportExts.includes(getFileExtension(filePath))) {
+          if (await isSupportedFile(filePath, extensionSet)) {
             const selectedFile = await window.api.file.get(filePath)
             if (selectedFile) {
               setFiles((prevFiles) => [...prevFiles, selectedFile])
@@ -106,7 +106,7 @@ export const handlePaste = async (
           }
         }
       } catch (error) {
-        Logger.error('[PasteService] onPaste:', error)
+        logger.error('onPaste:', error as Error)
         if (t) {
           window.message.error(t('chat.input.file_error'))
         }
@@ -116,7 +116,7 @@ export const handlePaste = async (
     // 其他情况默认粘贴
     return false
   } catch (error) {
-    Logger.error('[PasteService] handlePaste error:', error)
+    logger.error('handlePaste error:', error as Error)
     return false
   }
 }
@@ -148,7 +148,7 @@ export const init = () => {
   })
 
   isInitialized = true
-  Logger.info('[PasteService] Global paste handler initialized')
+  logger.verbose('Global paste handler initialized')
 }
 
 /**

@@ -47,6 +47,7 @@ const AntdProvider: FC<PropsWithChildren> = ({ children }) => {
             colorBorder: 'var(--color-border)'
           },
           InputNumber: {
+            controlHeight: 30,
             colorBorder: 'var(--color-border)'
           },
           Select: {
@@ -79,7 +80,8 @@ const AntdProvider: FC<PropsWithChildren> = ({ children }) => {
           Dropdown: {
             controlPaddingHorizontal: 8,
             borderRadiusLG: 10,
-            borderRadiusSM: 8
+            borderRadiusSM: 8,
+            paddingXS: 4
           },
           Popover: {
             borderRadiusLG: 10
@@ -97,6 +99,11 @@ const AntdProvider: FC<PropsWithChildren> = ({ children }) => {
           },
           Divider: {
             colorSplit: 'rgba(128,128,128,0.15)'
+          },
+          Splitter: {
+            splitBarDraggableSize: 0,
+            splitBarSize: 0.5,
+            splitTriggerSize: 10
           }
         },
         token: {

@@ -1,8 +1,10 @@
 import '@renderer/assets/styles/selection-toolbar.scss'
 
+import { loggerService } from '@logger'
 import { AppLogo } from '@renderer/config/env'
 import { useSelectionAssistant } from '@renderer/hooks/useSelectionAssistant'
 import { useSettings } from '@renderer/hooks/useSettings'
+import { useTimer } from '@renderer/hooks/useTimer'
 import i18n from '@renderer/i18n'
 import type { ActionItem } from '@renderer/types/selectionTypes'
 import { defaultLanguage } from '@shared/config/constant'
@@ -15,11 +17,13 @@ import { useTranslation } from 'react-i18next'
 import { TextSelectionData } from 'selection-hook'
 import styled from 'styled-components'
 
+const logger = loggerService.withContext('SelectionToolbar')
+
 //tell main the actual size of the content
 const updateWindowSize = () => {
   const rootElement = document.getElementById('root')
   if (!rootElement) {
-    console.error('SelectionToolbar: Root element not found')
+    logger.error('Root element not found')
     return
   }
   window.api?.selection.determineToolbarSize(rootElement.scrollWidth, rootElement.scrollHeight)
@@ -100,25 +104,41 @@ const SelectionToolbar: FC<{ demo?: boolean }> = ({ demo = false }) => {
   const [animateKey, setAnimateKey] = useState(0)
   const [copyIconStatus, setCopyIconStatus] = useState<'normal' | 'success' | 'fail'>('normal')
   const [copyIconAnimation, setCopyIconAnimation] = useState<'none' | 'enter' | 'exit'>('none')
-  const copyIconTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const { setTimeoutTimer, clearTimeoutTimer } = useTimer()
 
   const realActionItems = useMemo(() => {
     return actionItems?.filter((item) => item.enabled)
   }, [actionItems])
 
   const selectedText = useRef('')
+  // [macOS] only macOS has the fullscreen mode
+  const isFullScreen = useRef(false)
+
+  const onHideCleanUp = useCallback(() => {
+    setCopyIconStatus('normal')
+    setCopyIconAnimation('none')
+    clearTimeoutTimer('textSelection')
+    clearTimeoutTimer('copyIcon')
+  }, [clearTimeoutTimer])
 
   // listen to selectionService events
   useEffect(() => {
+    const cleanups: (() => void)[] = []
     // TextSelection
     const textSelectionListenRemover = window.electron?.ipcRenderer.on(
       IpcChannel.Selection_TextSelected,
       (_, selectionData: TextSelectionData) => {
         selectedText.current = selectionData.text
-        setTimeout(() => {
-          //make sure the animation is active
-          setAnimateKey((prev) => prev + 1)
-        }, 400)
+        isFullScreen.current = selectionData.isFullscreen ?? false
+        const cleanup = setTimeoutTimer(
+          'textSelection',
+          () => {
+            //make sure the animation is active
+            setAnimateKey((prev) => prev + 1)
+          },
+          400
+        )
+        cleanups.push(cleanup)
       }
     )
 
@@ -133,13 +153,12 @@ const SelectionToolbar: FC<{ demo?: boolean }> = ({ demo = false }) => {
       }
     )
 
-    if (!demo) updateWindowSize()
-
     return () => {
       textSelectionListenRemover()
       toolbarVisibilityChangeListenRemover()
+      cleanups.forEach((cleanup) => cleanup())
     }
-  }, [demo])
+  }, [demo, onHideCleanUp, setTimeoutTimer])
 
   //make sure the toolbar size is updated when the compact mode/actionItems is changed
   useEffect(() => {
@@ -168,11 +187,22 @@ const SelectionToolbar: FC<{ demo?: boolean }> = ({ demo = false }) => {
     }
   }, [customCss, demo])
 
-  const onHideCleanUp = () => {
-    setCopyIconStatus('normal')
-    setCopyIconAnimation('none')
-    clearTimeout(copyIconTimeoutRef.current)
-  }
+  // copy selected text to clipboard
+  const handleCopy = useCallback(async () => {
+    if (selectedText.current) {
+      const result = await window.api?.selection.writeToClipboard(selectedText.current)
+
+      setCopyIconStatus(result ? 'success' : 'fail')
+      setCopyIconAnimation('enter')
+      setTimeoutTimer(
+        'copyIcon',
+        () => {
+          setCopyIconAnimation('exit')
+        },
+        2000
+      )
+    }
+  }, [setTimeoutTimer])
 
   const handleAction = useCallback(
     (action: ActionItem) => {
@@ -196,21 +226,8 @@ const SelectionToolbar: FC<{ demo?: boolean }> = ({ demo = false }) => {
           break
       }
     },
-    [demo]
+    [demo, handleCopy]
   )
-
-  // copy selected text to clipboard
-  const handleCopy = async () => {
-    if (selectedText.current) {
-      const result = await window.api?.selection.writeToClipboard(selectedText.current)
-
-      setCopyIconStatus(result ? 'success' : 'fail')
-      setCopyIconAnimation('enter')
-      copyIconTimeoutRef.current = setTimeout(() => {
-        setCopyIconAnimation('exit')
-      }, 2000)
-    }
-  }
 
   const handleSearch = (action: ActionItem) => {
     if (!action.searchEngine) return
@@ -234,7 +251,8 @@ const SelectionToolbar: FC<{ demo?: boolean }> = ({ demo = false }) => {
   }
 
   const handleDefaultAction = (action: ActionItem) => {
-    window.api?.selection.processAction(action)
+    // [macOS] only macOS has the available isFullscreen mode
+    window.api?.selection.processAction(action, isFullScreen.current)
     window.api?.selection.hideToolbar()
   }
 
@@ -259,7 +277,7 @@ const SelectionToolbar: FC<{ demo?: boolean }> = ({ demo = false }) => {
 const Container = styled.div`
   display: inline-flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   height: var(--selection-toolbar-height);
   border-radius: var(--selection-toolbar-border-radius);
   border: var(--selection-toolbar-border);
@@ -269,6 +287,7 @@ const Container = styled.div`
   margin: var(--selection-toolbar-margin) !important;
   user-select: none;
   box-sizing: border-box;
+  overflow: hidden;
 `
 
 const LogoWrapper = styled.div<{ $draggable: boolean }>`
@@ -276,8 +295,13 @@ const LogoWrapper = styled.div<{ $draggable: boolean }>`
   align-items: center;
   justify-content: center;
   margin: var(--selection-toolbar-logo-margin);
-  background-color: transparent;
-  ${({ $draggable }) => $draggable && ' -webkit-app-region: drag;'}
+  padding: var(--selection-toolbar-logo-padding);
+  background-color: var(--selection-toolbar-logo-background);
+  border-width: var(--selection-toolbar-logo-border-width);
+  border-style: var(--selection-toolbar-logo-border-style);
+  border-color: var(--selection-toolbar-logo-border-color);
+  border-radius: var(--selection-toolbar-border-radius) 0 0 var(--selection-toolbar-border-radius);
+  ${({ $draggable }) => $draggable && ' -webkit-app-region: drag;'};
 `
 
 const Logo = styled(Avatar)`
@@ -307,14 +331,19 @@ const ActionWrapper = styled.div`
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  margin-left: 3px;
   background-color: transparent;
+  border-width: var(--selection-toolbar-buttons-border-width);
+  border-style: var(--selection-toolbar-buttons-border-style);
+  border-color: var(--selection-toolbar-buttons-border-color);
+  border-radius: var(--selection-toolbar-buttons-border-radius);
 `
 const ActionButton = styled.div`
+  height: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   cursor: pointer !important;
   margin: var(--selection-toolbar-button-margin);
   padding: var(--selection-toolbar-button-padding);
@@ -324,6 +353,10 @@ const ActionButton = styled.div`
   box-shadow: var(--selection-toolbar-button-box-shadow);
   transition: all 0.1s ease-in-out;
   will-change: color, background-color;
+  &:last-child {
+    border-radius: 0 var(--selection-toolbar-border-radius) var(--selection-toolbar-border-radius) 0;
+    padding: var(--selection-toolbar-button-last-padding);
+  }
 
   .btn-icon {
     width: var(--selection-toolbar-button-icon-size);
@@ -337,6 +370,7 @@ const ActionButton = styled.div`
     color: var(--selection-toolbar-button-text-color);
     transition: color 0.1s ease-in-out;
     will-change: color;
+    line-height: 1.1;
   }
   &:hover {
     .btn-icon {

@@ -1,5 +1,5 @@
 import { FileMetadata } from '@renderer/types'
-import { KB, MB } from '@shared/config/constant'
+import { KB, MB, textExts } from '@shared/config/constant'
 
 /**
  * 从文件路径中提取目录路径。
@@ -8,8 +8,7 @@ import { KB, MB } from '@shared/config/constant'
  */
 export function getFileDirectory(filePath: string): string {
   const parts = filePath.split('/')
-  const directory = parts.slice(0, -1).join('/')
-  return directory
+  return parts.slice(0, -1).join('/')
 }
 
 /**
@@ -24,6 +23,19 @@ export function getFileExtension(filePath: string): string {
     return '.' + extension
   }
   return '.'
+}
+
+/**
+ * 从文件路径中移除文件扩展名。
+ * @param {string} filePath 文件路径
+ * @returns {string} 移除扩展名后的文件路径
+ */
+export function removeFileExtension(filePath: string): string {
+  const parts = filePath.split('.')
+  if (parts.length > 1) {
+    return parts.slice(0, -1).join('.')
+  }
+  return filePath
 }
 
 /**
@@ -57,6 +69,15 @@ export function removeSpecialCharactersForFileName(str: string): string {
     .trim()
 }
 
+/**
+ * 检查文件是否为支持的类型。
+ * 支持的文件类型包括:
+ * 1. 文件扩展名在supportExts集合中的文件
+ * 2. 文本文件
+ * @param {string} filePath 文件路径
+ * @param {Set<string>} supportExts 支持的文件扩展名集合
+ * @returns {Promise<boolean>} 如果文件类型受支持返回true，否则返回false
+ */
 export async function isSupportedFile(filePath: string, supportExts: Set<string>): Promise<boolean> {
   try {
     if (supportExts.has(getFileExtension(filePath))) {
@@ -71,6 +92,11 @@ export async function isSupportedFile(filePath: string, supportExts: Set<string>
   } catch (error) {
     return false
   }
+}
+
+export async function isTextFile(filePath: string): Promise<boolean> {
+  const set = new Set(textExts)
+  return isSupportedFile(filePath, set)
 }
 
 export async function filterSupportedFiles(files: FileMetadata[], supportExts: string[]): Promise<FileMetadata[]> {

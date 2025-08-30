@@ -57,6 +57,9 @@ const CodeToolsPage: FC = () => {
       if (isEmbeddingModel(m) || isRerankModel(m) || isTextToImageModel(m)) {
         return false
       }
+      if (m.provider === 'cherryin') {
+        return false
+      }
       if (selectedCliTool === 'claude-code') {
         return m.id.includes('claude') || CLAUDE_OFFICIAL_SUPPORTED_PROVIDERS.includes(m.provider)
       }
@@ -346,11 +349,14 @@ const Container = styled.div`
 const ContentContainer = styled.div`
   display: flex;
   flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
 `
 
 const MainContent = styled.div`
   width: 600px;
   margin: auto;
+  min-height: fit-content;
 `
 
 const Title = styled.h1`

@@ -4761,7 +4761,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/system-ocr@npm:^1.0.2":
+"@napi-rs/system-ocr@npm:1.0.2":
   version: 1.0.2
   resolution: "@napi-rs/system-ocr@npm:1.0.2"
   dependencies:
@@ -4779,6 +4779,27 @@ __metadata:
     "@napi-rs/system-ocr-win32-x64-msvc":
       optional: true
   checksum: 10c0/170f89051d2b9da52648ef933ab5e73bbafcb7ffb98948d877d3c9718e308ebf258b7b947b0d4f2bfe65fd8d2adf5acf47e5f7efd59ac0535ca99562e41b833a
+  languageName: node
+  linkType: hard
+
+"@napi-rs/system-ocr@patch:@napi-rs/system-ocr@npm%3A1.0.2#~/.yarn/patches/@napi-rs-system-ocr-npm-1.0.2-59e7a78e8b.patch":
+  version: 1.0.2
+  resolution: "@napi-rs/system-ocr@patch:@napi-rs/system-ocr@npm%3A1.0.2#~/.yarn/patches/@napi-rs-system-ocr-npm-1.0.2-59e7a78e8b.patch::version=1.0.2&hash=407396"
+  dependencies:
+    "@napi-rs/system-ocr-darwin-arm64": "npm:1.0.2"
+    "@napi-rs/system-ocr-darwin-x64": "npm:1.0.2"
+    "@napi-rs/system-ocr-win32-arm64-msvc": "npm:1.0.2"
+    "@napi-rs/system-ocr-win32-x64-msvc": "npm:1.0.2"
+  dependenciesMeta:
+    "@napi-rs/system-ocr-darwin-arm64":
+      optional: true
+    "@napi-rs/system-ocr-darwin-x64":
+      optional: true
+    "@napi-rs/system-ocr-win32-arm64-msvc":
+      optional: true
+    "@napi-rs/system-ocr-win32-x64-msvc":
+      optional: true
+  checksum: 10c0/c1e336b3d506dd771c72b1bddc94e4a9ddeae5292222a7485d66dd0c11eed5d2a37cc7ea338f229e7d4abad276966658bdb4a2b322c9d6a0349dad6e65fcea51
   languageName: node
   linkType: hard
 
@@ -9406,7 +9427,7 @@ __metadata:
     "@mistralai/mistralai": "npm:^1.7.5"
     "@modelcontextprotocol/sdk": "npm:^1.17.0"
     "@mozilla/readability": "npm:^0.6.0"
-    "@napi-rs/system-ocr": "npm:^1.0.2"
+    "@napi-rs/system-ocr": "patch:@napi-rs/system-ocr@npm%3A1.0.2#~/.yarn/patches/@napi-rs-system-ocr-npm-1.0.2-59e7a78e8b.patch"
     "@notionhq/client": "npm:^2.2.15"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/core": "npm:2.0.0"
@@ -9509,7 +9530,9 @@ __metadata:
     google-auth-library: "npm:^9.15.1"
     graceful-fs: "npm:^4.2.11"
     he: "npm:^1.2.0"
+    html-tags: "npm:^5.1.0"
     html-to-image: "npm:^1.11.13"
+    htmlparser2: "npm:^10.0.0"
     husky: "npm:^9.1.7"
     i18next: "npm:^23.11.5"
     iconv-lite: "npm:^0.6.3"
@@ -12442,7 +12465,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"domutils@npm:^3.0.1":
+"domutils@npm:^3.0.1, domutils@npm:^3.2.1":
   version: 3.2.2
   resolution: "domutils@npm:3.2.2"
   dependencies:
@@ -14880,6 +14903,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html-tags@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "html-tags@npm:5.1.0"
+  checksum: 10c0/2dda19bc07e75837d0c52984558d92e8b82768050e4d6421b3164b1cb6ca5e73719209c2b23c0fa71faf097a7a3d18cf7f2021b488f1b1f270fca516c4c634c9
+  languageName: node
+  linkType: hard
+
 "html-to-image@npm:^1.11.13":
   version: 1.11.13
   resolution: "html-to-image@npm:1.11.13"
@@ -14911,6 +14941,18 @@ __metadata:
   version: 3.0.0
   resolution: "html-void-elements@npm:3.0.0"
   checksum: 10c0/a8b9ec5db23b7c8053876dad73a0336183e6162bf6d2677376d8b38d654fdc59ba74fdd12f8812688f7db6fad451210c91b300e472afc0909224e0a44c8610d2
+  languageName: node
+  linkType: hard
+
+"htmlparser2@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "htmlparser2@npm:10.0.0"
+  dependencies:
+    domelementtype: "npm:^2.3.0"
+    domhandler: "npm:^5.0.3"
+    domutils: "npm:^3.2.1"
+    entities: "npm:^6.0.0"
+  checksum: 10c0/47cfa37e529c86a7ba9a1e0e6f951ad26ef8ca5af898ab6e8916fa02c0264c1453b4a65f28b7b8a7f9d0d29b5a70abead8203bf8b3f07bc69407e85e7d9a68e4
   languageName: node
   linkType: hard
 
